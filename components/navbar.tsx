@@ -28,6 +28,7 @@ export function Navbar() {
     { name: "Médecins", href: "/doctors" },
     { name: "Services", href: "/services" },
     { name: "Contact", href: "/contact" },
+    { name: "Chat", href: "/chat" },
   ];
 
   const handleLogout = () => {

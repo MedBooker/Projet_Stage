@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { z } from 'zod';
 
+
 export default function RegisterPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,6 +29,8 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutreAssurance, setIsAutreAssurance] = useState(false);
+  const [autreAssuranceValue, setAutreAssuranceValue] = useState('');
 
   const steps = [
     {
@@ -171,7 +174,6 @@ export default function RegisterPage() {
                   <SelectContent>
                     <SelectItem value="homme">Homme</SelectItem>
                     <SelectItem value="femme">Femme</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -214,12 +216,20 @@ export default function RegisterPage() {
               <Input
                 id="numeroDeTelephone"
                 name="numeroDeTelephone"
-                placeholder="+33 6 12 34 56 78"
+                type="text"
+                placeholder="+221 77 123 45 68"
                 value={formData.numeroDeTelephone}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const numeric = raw.replace(/[^0-9+]/g, '');
+                  setFormData(prev => ({ ...prev, numeroDeTelephone: numeric }));
+                }}
                 required
                 className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Format attendu : +221 77 123 45 68
+              </p>
             </div>
 
             <div className="space-y-3">
@@ -227,7 +237,7 @@ export default function RegisterPage() {
               <Input
                 id="adresse"
                 name="adresse"
-                placeholder="123 Rue de Paris, 75000 Paris"
+                placeholder="Dakar, Sénégal"
                 value={formData.adresse}
                 onChange={handleChange}
                 required
@@ -237,21 +247,44 @@ export default function RegisterPage() {
 
             <div className="space-y-3">
               <Label htmlFor="assurance">Assurance maladie</Label>
-              <Select
-                value={formData.assurance}
-                onValueChange={(value) => handleSelectChange('assurance', value)}
-              >
-                <SelectTrigger className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
-                  <SelectValue placeholder="Sélectionnez votre assurance" />
-                </SelectTrigger>
-                <SelectContent>
-                  {assurances.map((assurance) => (
-                    <SelectItem key={assurance} value={assurance}>
-                      {assurance}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                {isAutreAssurance ? (
+                  <Input
+                    id="otherAssurance"
+                    placeholder="Entrez le nom de votre assurance"
+                    value={autreAssuranceValue}
+                    onChange={(e) => {
+                      setAutreAssuranceValue(e.target.value);
+                      setFormData(prev => ({ ...prev, assurance: e.target.value }));
+                    }}
+                    required
+                    className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                  />
+                ) : (
+                  <Select
+                    value={formData.assurance}
+                    onValueChange={(value) => {
+                      if (value === 'Autre') {
+                        setIsAutreAssurance(true);
+                        setFormData(prev => ({ ...prev, assurance: 'Autre' }));
+                      } else {
+                        setFormData(prev => ({ ...prev, assurance: value }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
+                      <SelectValue placeholder="Sélectionnez votre assurance" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assurances.map((assurance) => (
+                        <SelectItem key={assurance} value={assurance}>
+                          {assurance}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </>
         );
