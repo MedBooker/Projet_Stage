@@ -39,7 +39,6 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/90 dark:bg-emerald-950/90 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-emerald-950/80 shadow-sm">
       <div className="container flex h-20 items-center justify-between px-4 mx-auto">
-        {/* Logo */}
         <Link href="/" className="flex items-center space-x-3 group">
           <svg
             className="h-10 w-10 text-emerald-600 transition-transform duration-300 group-hover:scale-110"
@@ -60,7 +59,6 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Navigation Desktop */}
         <nav className="hidden md:flex items-center space-x-10">
           {links.map((link) => (
             <Link
@@ -82,9 +80,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Actions Droite (Desktop) */}
         <div className="hidden md:flex items-center space-x-4">
-          {/* Dark Mode Toggle */}
           <Button
             variant="ghost"
             size="sm"
@@ -96,7 +92,6 @@ export function Navbar() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
-          {/* Profil utilisateur connecté */}
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -155,7 +150,6 @@ export function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -187,7 +181,6 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       <motion.nav
         initial={{ height: 0, opacity: 0 }}
         animate={{

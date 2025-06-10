@@ -7,7 +7,6 @@ export const useAuth = () => {
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
-    // Simulez un utilisateur connecté (statique)
     const fakeUser = {
       name: "Mamadou NDIAYE",
       email: "mamadou.ndiaye@gmail.com",
@@ -16,7 +15,6 @@ export const useAuth = () => {
 
     localStorage.setItem("user", JSON.stringify(fakeUser));
     
-    // Si token ou user existe → authentifié
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
