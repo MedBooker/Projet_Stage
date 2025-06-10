@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
+// import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,9 +16,9 @@ const passwordSchema = z.string().min(8, "8 caractères minimum")
   .regex(/[!@#$%^&*]/, "Doit contenir un caractère spécial");
 
 export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
-  const email = searchParams.get('email');
+  // const searchParams = useSearchParams();
+  // const token = searchParams.get('token');
+  // const email = searchParams.get('email');
 
   const [formData, setFormData] = useState({
     password: '',
@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
           </div>
           <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">Nouveau mot de passe</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            {email ? `Pour ${email}` : 'Entrez votre nouveau mot de passe'}
+            { 'Entrez votre nouveau mot de passe'}
           </p>
         </div>
 
