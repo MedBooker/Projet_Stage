@@ -27,7 +27,7 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/chat', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: message })
@@ -36,7 +36,7 @@ export default function ChatPage() {
       const data = await res.json();
       const botMessage = { 
         role: 'assistant', 
-        content: data.reponse || "Je n'ai pas d'information précise. Contactez notre accueil au 33 000 00 00."
+        content: data.reponse || "Je n'ai pas d'information précise. Contactez notre accueil au  33 869 64 90 / 77 822 92 45."
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
