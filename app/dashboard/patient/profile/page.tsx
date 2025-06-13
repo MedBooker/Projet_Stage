@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, Mail, Phone, Calendar, MapPin, Lock, Pencil } from 'lucide-react';
@@ -8,27 +8,80 @@ import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
-  
+  const [token, setToken] = useState<string | null>(null);
+  const [annee, setAnnee] = useState('');
   const [profile, setProfile] = useState({
-    firstName: 'Moussa',
-    lastName: 'NDIAYE',
-    email: 'moussa.ndiaye@example.com',
-    birthDate: '1985-08-12',
-    phone: '+221 77 123 45 67',
-    address: 'Hann Maristes, Rue 10',
-    city: 'Dakar',
-    postalCode: '10000',
-    country: 'Sénégal'
+    firstName: '',
+    lastName: '',
+    email: '',
+    birthDate: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: ''
   });
+
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+  
+  useEffect(() => {
+    const getInfos = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Patients/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept' : 'application/json'
+          }
+        });
+        const data = await response.json();
+        setProfile({
+          firstName: data.prenom,
+          lastName: data.nom,
+          email: data.email,
+          birthDate: data.ddn,
+          phone: data.telephone,
+          address: data.adresse,
+          city: 'Dakar',
+          postalCode: '10000',
+          country: 'Sénégal'
+        });
+        setAnnee(data.anneeCreation);
+      } catch (error) {
+              console.error("Erreur lors du chargement des informations :", error);
+          }
+    };
+      if (token) {
+        getInfos();
+      }
+  }, [token]);
+  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfile(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEditMode(false);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/update-profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept' : 'application/json'
+        },
+        body: JSON.stringify(profile)
+      });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du profil :', error);
+        alert('Une erreur est survenue lors de la mise à jour de votre profil.');
+    };
   };
 
   return (
@@ -52,7 +105,7 @@ export default function ProfilePage() {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {profile.firstName} {profile.lastName}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">Patient depuis 2022</p>
+                <p className="text-gray-600 dark:text-gray-400">Patient depuis {annee}</p>
               </div>
               <Button 
                 variant={editMode ? "outline" : "default"} 

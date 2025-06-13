@@ -107,10 +107,21 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // Simulation d'inscription
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      localStorage.setItem('user', JSON.stringify(formData));
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/register', {
+        method : 'POST',
+        headers : {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error("Erreur", {
+          description: (data.message || "Une erreur est survenue lors de l'inscription")
+        });
+        return;
+      }
       toast.success("Inscription réussie", {
         description: "Redirection vers la connexion...",
         action: {
@@ -121,9 +132,9 @@ export default function RegisterPage() {
 
       setTimeout(() => router.push('/login'), 1500);
     } catch (error) {
-      toast.error("Erreur", {
-        description: "Une erreur est survenue lors de l'inscription"
-      });
+        toast.error("Erreur", {
+          description: "Une erreur est survenue lors de l'inscription"
+        });
     } finally {
       setIsLoading(false);
     }

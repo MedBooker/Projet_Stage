@@ -2,8 +2,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import { Calendar, Clock, FileText, User, MessageSquare, Stethoscope, Pill, Activity } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function PatientDashboard() {
+  const [token, setToken] = useState<string | null>(null);
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
+  
   const recentAppointments = [
     {
       id: 1,
@@ -40,12 +45,42 @@ export default function PatientDashboard() {
     }
   ];
 
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+
+  useEffect(() => {
+    const getInfos = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Patients/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept' : 'application/json'
+          }
+        });
+        const data = await response.json();
+        setNom(data.nom);
+        setPrenom(data.prenom);
+      } catch (error) {
+            console.error("Erreur lors du chargement des informations :", error);
+        }
+    };
+      if (token) {
+        getInfos();
+      }
+  }, [token]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-emerald-50 dark:from-emerald-950 dark:to-gray-900 py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bienvenue, Mamadou NDIAYE</h1>
+            {prenom && nom ? (
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bienvenue, {`${prenom} ${nom}`}</h1>
+            ) : (
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Bienvenue, Chargement...</h1>
+            )}
             <p className="text-gray-600 dark:text-gray-300 mt-2">Voici un résumé de votre activité médicale</p>
           </div>
           <div className="flex space-x-4 mt-4 md:mt-0">

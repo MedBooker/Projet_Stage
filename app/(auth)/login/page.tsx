@@ -28,36 +28,32 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const fakeEmail = 'mamadou.ndiaye@gmail.com';
-      const fakePassword = 'password123';
-
-      if (email === fakeEmail && password === fakePassword) {
-        const userData = {
-          name: "Matar Sagna",
-          email: fakeEmail,
-          firstName: "Matar",
-          lastName: "Sagna"
-        };
-
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("auth_token", "mock-jwt-token");
-
-        toast.success("Connexion réussie", {
-          description: "Redirection...",
-        });
-
-        setTimeout(() => router.push('/dashboard/patient'), 1500);
-      } else {
-        toast.error("Échec de connexion", {
-          description: "Identifiants incorrects",
-        });
-      }
-    } catch (error) {
-      toast.error("Erreur serveur", {
-        description: "Impossible de se connecter pour l'instant.",
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/login', {
+        method : 'POST',
+        headers : {
+          'Content-Type': 'application/json', 
+          'Accept': 'application/json' 
+        },
+        body : JSON.stringify({email, password}),
       });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error("Erreur", {
+          description: (data.message)
+        });
+        return;
+      }
+      sessionStorage.setItem('auth_token', data.access_token)
+      sessionStorage.setItem('user_id', data.id);
+      toast.success("Connexion réussie", {
+        description: "Redirection...",
+      });
+
+      setTimeout(() => router.push('/dashboard/patient'), 1500);
+    } catch (error) {
+        toast.error("Erreur serveur", {
+          description: "Impossible de se connecter pour l'instant.",
+        });
     } finally {
       setIsLoading(false);
     }
