@@ -303,19 +303,6 @@ export default function ProfilePage() {
                   />
                 </div>
                 <Separator className="my-6" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Lock className="w-5 h-5" /> Sécurité
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button variant="outline" className="justify-start">
-                      Changer mon mot de passe
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      Authentification à deux facteurs
-                    </Button>
-                  </div>
-                </div>
               </div>
             )}
           </CardContent>
