@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
-
-class Patient extends Model
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+class Patient extends Authenticatable
 {
     //
+    use HasApiTokens;
+
     protected $connexion = 'mongodb';
     protected $collection = 'patients';
     protected $fillable = [
@@ -16,6 +18,8 @@ class Patient extends Model
         'nom',
         'sexe',
         'dateDeNaissance',
+        'numeroDeTelephone',
+        'adresse',
         'assurance'
     ];
 }
