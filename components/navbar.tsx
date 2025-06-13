@@ -32,7 +32,7 @@ export function Navbar() {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_token");
     logout();
     router.push("/login");
   };

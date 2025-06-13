@@ -7,21 +7,20 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
-import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard/patient');
-    }
-  }, [isAuthenticated, router]);
+  if (isAuthenticated) {
+    router.push('/dashboard/patient');
+    return null;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,31 +28,45 @@ export default function LoginPage() {
 
     try {
       const response = await fetch('http://127.0.0.1:8000/api/Patients/login', {
-        method : 'POST',
-        headers : {
-          'Content-Type': 'application/json', 
-          'Accept': 'application/json' 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body : JSON.stringify({email, password}),
+        body: JSON.stringify({ email, password }),
       });
+
       const data = await response.json();
+
       if (!response.ok) {
         toast.error("Erreur", {
-          description: (data.message)
+          description: data.message || "Identifiants incorrects",
         });
         return;
       }
-      sessionStorage.setItem('auth_token', data.access_token)
-      sessionStorage.setItem('user_id', data.id);
+
+      sessionStorage.setItem('auth_token', data.access_token);
+      sessionStorage.setItem(
+        'user',
+        JSON.stringify({
+          name: `${data.prenom} ${data.nom}`,
+          email: data.email,
+        })
+      );
+
       toast.success("Connexion réussie", {
-        description: "Redirection...",
+        description: "Bienvenue sur votre espace patient.",
       });
 
-      setTimeout(() => router.push('/dashboard/patient'), 1500);
+      window.dispatchEvent(new Event('storage'));
+
+      setTimeout(() => {
+        router.push('/dashboard/patient');
+      }, 1000);
     } catch (error) {
-        toast.error("Erreur serveur", {
-          description: "Impossible de se connecter pour l'instant.",
-        });
+      toast.error("Erreur serveur", {
+        description: "Impossible de se connecter pour l'instant.",
+      });
     } finally {
       setIsLoading(false);
     }
