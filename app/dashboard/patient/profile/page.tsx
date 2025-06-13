@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { User, Mail, Phone, Calendar, MapPin, Lock, Pencil } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/lib/useAuth';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [annee, setAnnee] = useState('');
+  const { refreshUser } = useAuth();
+
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
@@ -25,17 +29,20 @@ export default function ProfilePage() {
   useEffect(() => {
     setToken(sessionStorage.getItem('auth_token'));
   }, []);
-  
+
   useEffect(() => {
     const getInfos = async () => {
+      if (!token) return;
+
       try {
         const response = await fetch('http://127.0.0.1:8000/api/Patients/profile', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'Accept' : 'application/json'
+            'Accept': 'application/json'
           }
         });
+
         const data = await response.json();
         setProfile({
           firstName: data.prenom,
@@ -50,14 +57,17 @@ export default function ProfilePage() {
         });
         setAnnee(data.anneeCreation);
       } catch (error) {
-              console.error("Erreur lors du chargement des informations :", error);
-          }
-    };
-      if (token) {
-        getInfos();
+        console.error("Erreur lors du chargement des informations :", error);
+        toast.error("Erreur", {
+          description: "Impossible de charger votre profil."
+        });
       }
+    };
+
+    if (token) {
+      getInfos();
+    }
   }, [token]);
-  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -74,14 +84,27 @@ export default function ProfilePage() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept' : 'application/json'
+          'Accept': 'application/json'
         },
         body: JSON.stringify(profile)
       });
+
+      if (!response.ok) {
+        throw new Error('Échec de la mise à jour');
+      }
+
+      toast.success("Profil mis à jour", {
+        description: "Vos informations ont été sauvegardées"
+      });
+
+      await refreshUser();
+
     } catch (error) {
-        console.error('Erreur lors de la mise à jour du profil :', error);
-        alert('Une erreur est survenue lors de la mise à jour de votre profil.');
-    };
+      console.error('Erreur lors de la mise à jour du profil :', error);
+      toast.error("Erreur", {
+        description: "Une erreur est survenue lors de la mise à jour de votre profil."
+      });
+    }
   };
 
   return (
@@ -98,7 +121,6 @@ export default function ProfilePage() {
               </Avatar>
             </div>
           </div>
-
           <CardHeader className="pt-20 pb-6">
             <div className="flex justify-between items-start">
               <div>
@@ -117,9 +139,7 @@ export default function ProfilePage() {
               </Button>
             </div>
           </CardHeader>
-
           <Separator className="mb-6" />
-
           <CardContent className="pb-8">
             {editMode ? (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -138,7 +158,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="lastName" className="block text-sm font-medium">
                       Nom
@@ -153,7 +172,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="email" className="block text-sm font-medium flex items-center gap-2">
                       <Mail className="w-4 h-4" /> Email
@@ -168,7 +186,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="phone" className="block text-sm font-medium flex items-center gap-2">
                       <Phone className="w-4 h-4" /> Téléphone
@@ -183,7 +200,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="birthDate" className="block text-sm font-medium flex items-center gap-2">
                       <Calendar className="w-4 h-4" /> Date de naissance
@@ -198,7 +214,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="address" className="block text-sm font-medium flex items-center gap-2">
                       <MapPin className="w-4 h-4" /> Adresse
@@ -213,7 +228,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="postalCode" className="block text-sm font-medium">
                       Code postal
@@ -228,7 +242,6 @@ export default function ProfilePage() {
                       required
                     />
                   </div>
-                  
                   <div className="space-y-2">
                     <label htmlFor="city" className="block text-sm font-medium">
                       Ville
@@ -244,7 +257,6 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-
                 <div className="flex justify-end gap-3 pt-4">
                   <Button 
                     type="button" 
@@ -290,9 +302,7 @@ export default function ProfilePage() {
                     className="md:col-span-2"
                   />
                 </div>
-
                 <Separator className="my-6" />
-
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Lock className="w-5 h-5" /> Sécurité

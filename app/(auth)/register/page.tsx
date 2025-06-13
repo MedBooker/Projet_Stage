@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { z } from 'zod';
 
-
 export default function RegisterPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -68,7 +67,6 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
     if (name === 'password') {
       const result = z.string()
         .min(8, "8 caractères minimum")
@@ -76,7 +74,6 @@ export default function RegisterPage() {
         .regex(/[0-9]/, "Doit contenir un chiffre")
         .regex(/[!@#$%^&*]/, "Doit contenir un caractère spécial")
         .safeParse(value);
-
       if (!result.success) {
         setPasswordErrors(result.error.errors.map(err => err.message));
       } else {
@@ -99,17 +96,22 @@ export default function RegisterPage() {
 
   const isStepValid = () => {
     const currentFields = steps[currentStep].fields;
-    return currentFields.every(field => formData[field as keyof typeof formData]);
+
+    return currentFields.every(field => {
+      if (field === 'assurance') return true; 
+
+      const value = formData[field as keyof typeof formData];
+      return value !== null && value !== '';
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       const response = await fetch('http://127.0.0.1:8000/api/Patients/register', {
-        method : 'POST',
-        headers : {
+        method: 'POST',
+        headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
@@ -118,7 +120,7 @@ export default function RegisterPage() {
       const data = await response.json();
       if (!response.ok) {
         toast.error("Erreur", {
-          description: (data.message || "Une erreur est survenue lors de l'inscription")
+          description: data.message || "Une erreur est survenue lors de l'inscription"
         });
         return;
       }
@@ -129,12 +131,11 @@ export default function RegisterPage() {
           onClick: () => router.push('/login')
         },
       });
-
       setTimeout(() => router.push('/login'), 1500);
     } catch (error) {
-        toast.error("Erreur", {
-          description: "Une erreur est survenue lors de l'inscription"
-        });
+      toast.error("Erreur", {
+        description: "Une erreur est survenue lors de l'inscription"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +172,6 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-3">
                 <Label htmlFor="sexe">Sexe *</Label>
@@ -204,7 +204,6 @@ export default function RegisterPage() {
             </div>
           </>
         );
-
       case 1:
         return (
           <>
@@ -221,7 +220,6 @@ export default function RegisterPage() {
                 className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
-
             <div className="space-y-3">
               <Label htmlFor="numeroDeTelephone">Numéro de téléphone *</Label>
               <Input
@@ -231,18 +229,26 @@ export default function RegisterPage() {
                 placeholder="+221 77 123 45 68"
                 value={formData.numeroDeTelephone}
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  const numeric = raw.replace(/[^0-9+]/g, '');
-                  setFormData(prev => ({ ...prev, numeroDeTelephone: numeric }));
+                  let input = e.target.value.replace(/\s/g, '');
+                  if (input === '' || input === '+221') {
+                    setFormData(prev => ({ ...prev, numeroDeTelephone: '' }));
+                    return;
+                  }
+                  if (input.startsWith('+221')) input = input.slice(4);
+                  let raw = input.replace(/\D/g, '').slice(0, 9);
+                  let displayValue = '+221';
+                  if (raw.length > 0) displayValue += ' ' + raw.slice(0, 2);
+                  if (raw.length > 2) displayValue += ' ' + raw.slice(2, 5);
+                  if (raw.length > 5) displayValue += ' ' + raw.slice(5, 9);
+                  setFormData(prev => ({ ...prev, numeroDeTelephone: displayValue }));
                 }}
                 required
                 className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Format attendu : +221 77 123 45 68
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Format attendu : +221 70 398 55 44
               </p>
             </div>
-
             <div className="space-y-3">
               <Label htmlFor="adresse">Adresse *</Label>
               <Input
@@ -255,51 +261,73 @@ export default function RegisterPage() {
                 className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
-
             <div className="space-y-3">
-              <Label htmlFor="assurance">Assurance maladie</Label>
-              <div>
-                {isAutreAssurance ? (
-                  <Input
-                    id="otherAssurance"
-                    placeholder="Entrez le nom de votre assurance"
-                    value={autreAssuranceValue}
-                    onChange={(e) => {
-                      setAutreAssuranceValue(e.target.value);
-                      setFormData(prev => ({ ...prev, assurance: e.target.value }));
-                    }}
-                    required
-                    className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
-                  />
-                ) : (
-                  <Select
-                    value={formData.assurance}
-                    onValueChange={(value) => {
-                      if (value === 'Autre') {
-                        setIsAutreAssurance(true);
-                        setFormData(prev => ({ ...prev, assurance: 'Autre' }));
-                      } else {
-                        setFormData(prev => ({ ...prev, assurance: value }));
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
-                      <SelectValue placeholder="Sélectionnez votre assurance" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {assurances.map((assurance) => (
-                        <SelectItem key={assurance} value={assurance}>
-                          {assurance}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
+      <Label htmlFor="assurance">Assurance maladie</Label>
+      <div>
+        {isAutreAssurance && formData.assurance !== 'Aucune' ? (
+          <Input
+            id="otherAssurance"
+            placeholder="Entrez le nom de votre assurance"
+            value={autreAssuranceValue}
+            onChange={(e) => {
+              setAutreAssuranceValue(e.target.value);
+              setFormData(prev => ({ ...prev, assurance: e.target.value }));
+            }}
+            className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+            disabled={formData.assurance === 'Aucune'}
+          />
+        ) : (
+          <Select
+            value={formData.assurance === 'Aucune' ? '' : formData.assurance}
+            onValueChange={(value) => {
+              if (value === 'Autre') {
+                setIsAutreAssurance(true);
+                setFormData(prev => ({ ...prev, assurance: '' }));
+              } else {
+                setIsAutreAssurance(false);
+                setFormData(prev => ({ ...prev, assurance: value }));
+              }
+            }}
+            disabled={formData.assurance === 'Aucune'}
+          >
+            <SelectTrigger className="dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
+              <SelectValue placeholder="Sélectionnez votre assurance" />
+            </SelectTrigger>
+            <SelectContent>
+              {assurances.map((assurance) => (
+                <SelectItem key={assurance} value={assurance}>
+                  {assurance}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <div className="flex items-center space-x-2 mt-4">
+        <input
+          type="checkbox"
+          id="noInsurance"
+          checked={formData.assurance === 'Aucune'}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setFormData(prev => ({ ...prev, assurance: 'Aucune' }));
+              setIsAutreAssurance(false);
+              setAutreAssuranceValue('');
+            } else {
+              setFormData(prev => ({ ...prev, assurance: '' }));
+            }
+          }}
+          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+        />
+        <label htmlFor="noInsurance" className="text-sm text-gray-700 dark:text-gray-300">
+          Je n'ai pas d'assurance maladie
+        </label>
+      </div>
+
             </div>
           </>
         );
-
       case 2:
         return (
           <>
@@ -339,7 +367,6 @@ export default function RegisterPage() {
                 ))}
               </div>
             </div>
-
             <div className="space-y-3">
               <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
               <div className="relative">
@@ -364,7 +391,6 @@ export default function RegisterPage() {
             </div>
           </>
         );
-
       default:
         return null;
     }
@@ -389,10 +415,8 @@ export default function RegisterPage() {
             />
           </div>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-6">
           {renderStep()}
-
           <div className="mt-8 flex justify-between">
             {currentStep > 0 && (
               <Button
@@ -405,7 +429,6 @@ export default function RegisterPage() {
                 Précédent
               </Button>
             )}
-
             {currentStep < steps.length - 1 ? (
               <Button
                 type="button"
@@ -434,7 +457,6 @@ export default function RegisterPage() {
             )}
           </div>
         </form>
-
         <div className="mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Déjà un compte ?{' '}
