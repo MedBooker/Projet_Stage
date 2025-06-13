@@ -31,7 +31,7 @@ class PatientController extends Controller
             'prenom' => $request->prenom,
             'nom' => $request->nom,
             'adresseMail' => $request->email,
-            'motDePasse' => bcrypt($request->password), 
+            'motDePasse' => bcrypt($request->password),
             'sexe' => $request->sexe,
             'dateDeNaissance' => $request->dateDeNaissance,
             'numeroDeTelephone' => $request->numeroDeTelephone,
@@ -44,25 +44,32 @@ class PatientController extends Controller
         ]);
     }
 
-    public function login(Request $request) {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-        $patient = Patient::where('adresseMail', $request->email)->first();
-        if (!$patient || !Hash::check($request->password, $patient->motDePasse)) {
-            return response()->json([
-                'message' => 'Identifiants invalides'
-            ], 400);
-        }
-        $token = $patient->createToken('auth_token', ['*'], now()->addMinutes(60))->plainTextToken;
-        $cookie = cookie('auth_token', $token, 60, null, null, true, true, false, 'None');
+public function login(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+
+    $patient = Patient::where('adresseMail', $request->email)->first();
+
+    if (!$patient || !Hash::check($request->password, $patient->motDePasse)) {
         return response()->json([
-            'message' => 'Connexion réussie',
-            'access_token' => $token,
-            'id' => $patient->_id,
-        ])->cookie($cookie);
+            'message' => 'Identifiants invalides'
+        ], 400);
     }
+
+    $token = $patient->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Connexion réussie',
+        'access_token' => $token,
+        'id' => $patient->_id,
+        'prenom' => $patient->prenom,
+        'nom' => $patient->nom,
+        'email' => $patient->adresseMail,
+    ]);
+}
 
     public function profile(Request $request) {
         $patient = $request->user();
