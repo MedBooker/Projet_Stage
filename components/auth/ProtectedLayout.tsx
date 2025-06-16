@@ -1,19 +1,23 @@
-'use client';
-import { useAuth } from '@/lib/useAuth';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
+    const token = sessionStorage.getItem("auth_token");
+    if (!token) {
+      router.replace("/(auth)/login");
+    } else {
+      setLoading(false);
     }
-  }, [isAuthenticated, router]);
+  }, [router]);
 
-  if (!isAuthenticated) return null;
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
 
   return <>{children}</>;
 }
