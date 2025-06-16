@@ -24,11 +24,7 @@ export function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
 
   const links = [
-    { name: "Accueil", href: "/" },
-    { name: "Médecins", href: "/doctors" },
-    { name: "Services", href: "/services" },
-    { name: "Contact", href: "/contact" },
-    { name: "Chat", href: "/chat" },
+    { name: "Accueil", href: "/login" },
   ];
 
   const handleLogout = () => {

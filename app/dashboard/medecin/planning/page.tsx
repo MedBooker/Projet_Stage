@@ -1,56 +1,75 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 export default function PlanningPage() {
   const [creneaux, setCreneaux] = useState([
-    { id: 1, date: '2025-06-10', debut: '09:00', fin: '10:00', patient: 'Jean Louis' },
-    { id: 2, date: '2025-06-10', debut: '11:00', fin: '12:00', patient: 'Disponible' },
+    { id: 1, debut: '09:00', fin: '10:00', patient: 'Jean Louis', statut: 'occupé' },
+    { id: 2, debut: '11:00', fin: '12:00', patient: 'Disponible', statut: 'disponible' },
   ]);
 
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [debut, setDebut] = useState('');
+  const [fin, setFin] = useState('');
 
-  const handleAdd = () => {
-    if (!startDate || !endDate) return;
-    const newSlot = {
+  interface Creneau {
+    id: number;
+    debut: string;
+    fin: string;
+    patient: string;
+    statut: string;
+  }
+
+  const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!debut || !fin) return;
+    const newSlot: Creneau = {
       id: creneaux.length + 1,
-      date: startDate.split('T')[0],
-      debut: startDate.split('T')[1].slice(0, 5),
-      fin: endDate.split('T')[1].slice(0, 5),
+      debut,
+      fin,
       patient: 'Disponible',
+      statut: 'disponible'
     };
     setCreneaux([...creneaux, newSlot]);
-    alert("Créneau ajouté !");
+    alert(`Créneau ajouté : ${debut} → ${fin}`);
   };
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Formulaire d’ajout */}
       <Card>
         <CardHeader>
-          <CardTitle>Mon Planning</CardTitle>
+          <CardTitle>Ajouter un créneau horaire</CardTitle>
         </CardHeader>
-        <form onSubmit={(e) => handleAdd()}>
+        <form onSubmit={handleAdd}>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label>Date et heure de début</label>
+                <Label htmlFor="debut">Heure de début</Label>
                 <Input
-                  type="datetime-local"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  id="debut"
+                  type="time"
+                  value={debut}
+                  onChange={(e) => setDebut(e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label>Date et heure de fin</label>
+                <Label htmlFor="fin">Heure de fin</Label>
                 <Input
-                  type="datetime-local"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  id="fin"
+                  type="time"
+                  value={fin}
+                  onChange={(e) => setFin(e.target.value)}
                   required
                 />
               </div>
@@ -64,22 +83,23 @@ export default function PlanningPage() {
         </form>
       </Card>
 
+      {/* Liste des créneaux */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Mes Créneaux</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {creneaux.map((slot) => (
-              <li key={slot.id} className="flex justify-between p-3 bg-emerald-50 dark:bg-gray-800/30 rounded">
-                <div>
-                  <strong>{slot.debut} - {slot.fin}</strong>
-                  <p className="text-sm">{slot.patient}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button className="text-blue-500 hover:underline">Modifier</button>
-                  <button className="text-red-500 hover:underline">Supprimer</button>
-                </div>
+              <li key={slot.id} className="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
+                <span>{slot.debut} - {slot.fin}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  slot.statut === 'disponible'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                    : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
+                }`}>
+                  {slot.statut}
+                </span>
               </li>
             ))}
           </ul>

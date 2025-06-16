@@ -1,4 +1,3 @@
-// app/dashboard/medecin/layout.tsx
 'use client';
 
 import ProtectedLayout from '@/components/auth/ProtectedLayout';
@@ -9,7 +8,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const router = useRouter();
 
   return (
-    <ProtectedLayout>
+    // <ProtectedLayout>
       <div className="min-h-screen bg-emerald-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
         <div className="flex flex-col md:flex-row">
           {/* Sidebar */}
@@ -53,6 +52,6 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
           <main className="flex-1 p-6">{children}</main>
         </div>
       </div>
-    </ProtectedLayout>
+    // </ProtectedLayout>
   );
 }
