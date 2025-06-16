@@ -1,4 +1,3 @@
-// app/dashboard/medecin/planning/page.tsx
 'use client';
 
 import { useState } from 'react';

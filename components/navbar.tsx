@@ -115,13 +115,7 @@ export function Navbar() {
                 <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/profile">Mon Profil</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/settings">Paramètres</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/">Dashboard</Link>
+                  <Link href="/dashboard/medecin/">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400">
                   <LogOut className="mr-2 h-4 w-4" /> Déconnexion
@@ -139,14 +133,7 @@ export function Navbar() {
                   Connexion
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button
-                  size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  Inscription
-                </Button>
-              </Link>
+              
             </>
           )}
         </div>
@@ -216,13 +203,10 @@ export function Navbar() {
                 <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/profile">Mon Profil</Link>
+                  <Link href="/dashboard/medecin/profile">Mon Profil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/settings">Paramètres</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/patient/">Dashboard</Link>
+                  <Link href="/dashboard/medecin/">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 dark:text-red-400">
                   <LogOut className="mr-2 h-4 w-4" /> Déconnexion
@@ -277,11 +261,7 @@ export function Navbar() {
                     Connexion
                   </Button>
                 </Link>
-                <Link href="/register" className="w-full">
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                    Inscription
-                  </Button>
-                </Link>
+                
               </div>
             )}
           </li>

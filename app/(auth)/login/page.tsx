@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   if (isAuthenticated) {
-    router.push('/dashboard/patient');
+    router.push('/dashboard/medecin');
     return null;
   }
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/login', {
+      const response = await fetch('http://127.0.0.1:8000/api/Medecins/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,13 +55,13 @@ export default function LoginPage() {
       );
 
       toast.success("Connexion réussie", {
-        description: "Bienvenue sur votre espace patient.",
+        description: "Bienvenue sur votre espace médecin.",
       });
 
       window.dispatchEvent(new Event('storage'));
 
       setTimeout(() => {
-        router.push('/dashboard/patient');
+        router.push('/dashboard/medecin');
       }, 1000);
     } catch (error) {
       toast.error("Erreur serveur", {
@@ -76,7 +76,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-950 dark:to-gray-900 px-4">
       <div className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-md border border-emerald-100 dark:border-emerald-900/50">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">Bienvenue</h1>
+          <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">Espace Médecin</h1>
           <p className="text-gray-500 dark:text-gray-400">Connectez-vous à votre compte</p>
         </div>
 
@@ -139,14 +139,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
-          <p className="text-gray-500 dark:text-gray-400">
-            Pas encore inscrit ?{' '}
-            <a href="/register" className="font-medium text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 hover:underline">
-              Créer un compte
-            </a>
-          </p>
-        </div>
+        
 
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
           <p className="text-xs text-center text-gray-400 dark:text-gray-500">
