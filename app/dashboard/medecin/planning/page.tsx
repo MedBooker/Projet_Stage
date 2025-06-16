@@ -45,7 +45,6 @@ export default function PlanningPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Formulaire d’ajout */}
       <Card>
         <CardHeader>
           <CardTitle>Ajouter un créneau horaire</CardTitle>
@@ -83,7 +82,6 @@ export default function PlanningPage() {
         </form>
       </Card>
 
-      {/* Liste des créneaux */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Mes Créneaux</CardTitle>

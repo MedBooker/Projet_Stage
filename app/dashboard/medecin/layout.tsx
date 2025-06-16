@@ -11,7 +11,6 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
     <ProtectedLayout>
       <div className="min-h-screen bg-emerald-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
         <div className="flex flex-col md:flex-row">
-          {/* Sidebar */}
           <aside className="w-full md:w-64 p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg m-4 md:m-6">
             <h2 className="text-xl font-bold mb-6 text-emerald-700 dark:text-emerald-400">Dashboard Médecin</h2>
             <nav className="space-y-2">
@@ -48,7 +47,6 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
             </nav>
           </aside>
 
-          {/* Main content */}
           <main className="flex-1 p-6">{children}</main>
         </div>
       </div>
