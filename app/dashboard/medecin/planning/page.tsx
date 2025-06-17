@@ -10,97 +10,178 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { toast } from "sonner";
 
 export default function PlanningPage() {
   const [creneaux, setCreneaux] = useState([
-    { id: 1, debut: '09:00', fin: '10:00', patient: 'Jean Louis', statut: 'occupé' },
-    { id: 2, debut: '11:00', fin: '12:00', patient: 'Disponible', statut: 'disponible' },
+    { id: 1, date: '2025-06-10', debut: '09:00', fin: '10:00', patient: 'Jean Louis' },
+    { id: 2, date: '2025-06-10', debut: '11:00', fin: '12:00', patient: 'Disponible' }
   ]);
 
-  const [debut, setDebut] = useState('');
-  const [fin, setFin] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
   interface Creneau {
     id: number;
+    date: string;
     debut: string;
     fin: string;
     patient: string;
-    statut: string;
+  }
+
+  interface NewSlot {
+    _id: string;
+    date: string;
+    heureDebut: string;
+    heureFin: string;
+    idMedecin: string;
+    created_at: string;
+    updated_at: string;
   }
 
   const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!debut || !fin) return;
-    const newSlot: Creneau = {
-      id: creneaux.length + 1,
-      debut,
-      fin,
-      patient: 'Disponible',
-      statut: 'disponible'
+    
+    if (!date || !startTime || !endTime) {
+      toast('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (startTime >= endTime) {
+      toast("L'heure de fin doit être après l'heure de début");
+      return;
+    }
+
+    const newSlot: NewSlot = {
+      _id: `slot-${creneaux.length + 1}`,
+      date: date,
+      heureDebut: startTime,
+      heureFin: endTime,
+      idMedecin: '', 
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    setCreneaux([...creneaux, newSlot]);
-    alert(`Créneau ajouté : ${debut} → ${fin}`);
+
+    fetch('/api/doctor/schedule', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newSlot)
+    })
+      .then((res: Response) => res.json())
+      .then((data: unknown) => {
+        alert("Créneau ajouté avec succès !");
+        setCreneaux([...creneaux, {
+          id: creneaux.length + 1,
+          date: date,
+          debut: startTime,
+          fin: endTime,
+          patient: 'Disponible' 
+        }]);
+        setDate('');
+        setStartTime('');
+        setEndTime('');
+      })
+      .catch((err: unknown) => {
+        console.error("Erreur lors de l'ajout:", err);
+        alert("Erreur lors de l'ajout du créneau");
+      });
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card>
+    <div className="max-w-4xl mx-auto p-4">
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Ajouter un créneau horaire</CardTitle>
+          <CardTitle>Ajouter un créneau</CardTitle>
         </CardHeader>
         <form onSubmit={handleAdd}>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="debut">Heure de début</Label>
+                <label className="block text-sm font-medium mb-1">Date</label>
                 <Input
-                  id="debut"
-                  type="time"
-                  value={debut}
-                  onChange={(e) => setDebut(e.target.value)}
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
                   required
+                  className="w-full"
                 />
               </div>
+              
               <div>
-                <Label htmlFor="fin">Heure de fin</Label>
+                <label className="block text-sm font-medium mb-1">Heure de début</label>
                 <Input
-                  id="fin"
                   type="time"
-                  value={fin}
-                  onChange={(e) => setFin(e.target.value)}
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
                   required
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Heure de fin</label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  required
+                  className="w-full"
                 />
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-end">
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              Ajouter
+            <Button 
+              type="submit" 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Ajouter Créneau
             </Button>
           </CardFooter>
         </form>
       </Card>
 
-      <Card className="mt-6">
+      <Card>
         <CardHeader>
           <CardTitle>Mes Créneaux</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2">
-            {creneaux.map((slot) => (
-              <li key={slot.id} className="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
-                <span>{slot.debut} - {slot.fin}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  slot.statut === 'disponible'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
-                }`}>
-                  {slot.statut}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {creneaux.length === 0 ? (
+            <p className="text-gray-500">Aucun créneau programmé</p>
+          ) : (
+            <ul className="space-y-3">
+              {creneaux.map((slot) => (
+                <li 
+                  key={slot.id} 
+                  className="p-4 bg-emerald-50 dark:bg-gray-800 rounded-md flex justify-between items-center border border-emerald-100"
+                >
+                  <div>
+                    <p className="font-semibold">
+                      {new Date(slot.date).toLocaleDateString('fr-FR')} • {slot.debut} - {slot.fin}
+                    </p>
+                    <p className={`text-sm ${
+                      slot.patient === 'Disponible' 
+                        ? 'text-emerald-600' 
+                        : 'text-gray-600'
+                    }`}>
+                      {slot.patient}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm">
+                      Modifier
+                    </Button>
+                    <Button variant="destructive" size="sm">
+                      Supprimer
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
