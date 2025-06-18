@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -15,15 +15,49 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from 
 
 export default function MedecinDashboard() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [token, setToken] = useState<string | null>(null);
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
   const [appointments] = useState([
     { id: 1, patient: 'Jean Louis', time: '09:00 - 10:00' },
     { id: 2, patient: 'Awa Sow', time: '11:00 - 12:00' }
   ]);
 
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+
+  useEffect(() => {
+    const getInfos = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Medecins/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept' : 'application/json'
+          }
+        });
+        const data = await response.json();
+        console.log(data);
+        setNom(data.nom);
+        setPrenom(data.prenom);
+      } catch (error) {
+            console.error("Erreur lors du chargement des informations :", error);
+        }
+    };
+    if (token) {
+      getInfos();
+    }
+  }, [token]);
+
   return (
     <div className="space-y-6 p-4">
       <div>
-        <h1 className="text-2xl font-semibold">Bonjour, Dr. Diaw 👋</h1>
+        {prenom && nom ? (
+          <h1 className="text-2xl font-semibold">Bonjour, Dr. {`${prenom} ${nom}`} 👋</h1>
+        ) : (
+          <h1 className="text-2xl font-semibold">Bonjour, Dr. Chargement... 👋</h1>
+        )}
         <p className="text-gray-600 dark:text-gray-400 mt-1">
           Bienvenue dans votre espace personnalisé.
         </p>

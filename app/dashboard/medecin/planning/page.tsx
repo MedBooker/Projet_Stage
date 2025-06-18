@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -21,6 +21,7 @@ export default function PlanningPage() {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [token, setToken] = useState<string | null>(null);
 
   interface Creneau {
     id: number;
@@ -31,16 +32,16 @@ export default function PlanningPage() {
   }
 
   interface NewSlot {
-    _id: string;
     date: string;
     heureDebut: string;
     heureFin: string;
-    idMedecin: string;
-    created_at: string;
-    updated_at: string;
   }
 
-  const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!date || !startTime || !endTime) {
@@ -54,40 +55,43 @@ export default function PlanningPage() {
     }
 
     const newSlot: NewSlot = {
-      _id: `slot-${creneaux.length + 1}`,
       date: date,
       heureDebut: startTime,
       heureFin: endTime,
-      idMedecin: '', 
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
     };
 
-    fetch('/api/doctor/schedule', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newSlot)
-    })
-      .then((res: Response) => res.json())
-      .then((data: unknown) => {
-        alert("Créneau ajouté avec succès !");
-        setCreneaux([...creneaux, {
-          id: creneaux.length + 1,
-          date: date,
-          debut: startTime,
-          fin: endTime,
-          patient: 'Disponible' 
-        }]);
-        setDate('');
-        setStartTime('');
-        setEndTime('');
-      })
-      .catch((err: unknown) => {
-        console.error("Erreur lors de l'ajout:", err);
-        alert("Erreur lors de l'ajout du créneau");
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/Medecins/add-schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(newSlot)
       });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error("Erreur", {
+          description: data.message || "Identifiants incorrects",
+        });
+        return;
+      }
+      toast.success("Créneau ajouté avec succès !");
+      setCreneaux([...creneaux, {
+        id: creneaux.length + 1,
+        date: date,
+        debut: startTime,
+        fin: endTime,
+        patient: 'Disponible' 
+      }]);
+      setDate('');
+      setStartTime('');
+      setEndTime('');
+    } catch (err) {
+        console.error("Erreur réseau:", err);
+        toast.error("Erreur de connexion au serveur");
+    }
   };
 
   return (
