@@ -27,7 +27,7 @@ class PatientController extends Controller
                 'message' => 'Un patient avec cette adresse mail existe déjà. Veuillez la changer.'
             ],400);
         }
-        $patient = Patient::create([
+        $data = [
             'prenom' => $request->prenom,
             'nom' => $request->nom,
             'adresseMail' => $request->email,
@@ -36,8 +36,11 @@ class PatientController extends Controller
             'dateDeNaissance' => $request->dateDeNaissance,
             'numeroDeTelephone' => $request->numeroDeTelephone,
             'adresse' => $request->adresse,
-            'assurance' => $request->assurance ?? null
-        ]);
+        ];
+        if ($request->assurance !== 'Aucune') {
+            $data['assurance'] = $request->assurance;
+        }
+        $patient = Patient::create($data);
         return response()->json([
             'message' => 'Patient créé avec succès',
             'patient' => $patient
@@ -59,7 +62,7 @@ public function login(Request $request)
         ], 400);
     }
 
-    $token = $patient->createToken('auth_token')->plainTextToken;
+    $token = $patient->createToken('auth_token', ['*'], now()->addMinutes(60))->plainTextToken;
 
     return response()->json([
         'message' => 'Connexion réussie',
@@ -72,7 +75,7 @@ public function login(Request $request)
 }
 
     public function profile(Request $request) {
-        $patient = $request->user();
+        $patient = $request->user('patient');
         return response()->json([
             'nom' => $patient->nom,
             'prenom' => $patient->prenom,
@@ -93,7 +96,7 @@ public function login(Request $request)
             'phone' => 'required|string|max:255',
             'birthDate' => 'required|date',
         ]);
-        $patient = $request->user();
+        $patient = $request->user('patient');
         $patient->update([
             'prenom' => $request->firstName,
             'nom' => $request->lastName,
