@@ -64,11 +64,6 @@ class MedecinController extends Controller
         ];
         $debut = Carbon::createFromFormat('H:i', $request->heureDebut);
         $fin = Carbon::createFromFormat('H:i', $request->heureFin);
-        if ($debut->diffInMinutes($fin) != 30) {
-            return response()->json([
-                'message' => 'La durée doit être de 30 minutes',
-            ], 400);
-        }
         $creneauExiste = CreneauHoraire::where('date', $request->date)
                                         ->where('heureDebut', $request->heureDebut)
                                         ->where('heureFin', $request->heureFin)
