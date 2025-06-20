@@ -1,14 +1,20 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2, Send, Bot, User, ShieldAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 export default function ChatPage() {
   const router = useRouter();
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([
+  const [messages, setMessages] = useState<{ role: string; content: string; id: string }[]>([
     { 
       role: 'assistant', 
-      content: 'Bonjour ! Je suis AmiBot, l\'assistant intelligent de la Clinique de l\'Amitié. 🌿 Posez-moi vos questions sur nos services médicaux, horaires ou spécialités.'
+      content: 'Bonjour ! Je suis AmiBot, votre assistant virtuel à la Clinique de l\'Amitié. 🌿\n\nComment puis-je vous aider aujourd\'hui ? ',
+      id: '1'
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,30 +27,51 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
 
-    const userMessage = { role: 'user', content: message };
+    // Add user message
+    const userMessage = { 
+      role: 'user', 
+      content: message,
+      id: Date.now().toString() 
+    };
     setMessages(prev => [...prev, userMessage]);
     setMessage('');
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ question: message })
       });
 
-      const data = await res.json();
+      if (!response.ok) {
+        throw new Error('Erreur de réponse du serveur');
+      }
+
+      const data = await response.json();
+      
       const botMessage = { 
         role: 'assistant', 
-        content: data.reponse || "Je n'ai pas d'information précise. Contactez notre accueil au  33 869 64 90 / 77 822 92 45."
+        content: data.reponse || "Je n'ai pas pu obtenir de réponse précise. Veuillez contacter notre accueil au 33 869 64 90.",
+        id: Date.now().toString()
       };
+      
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
+      console.error('Erreur API:', error);
+      toast.error("Problème de connexion", {
+        description: "Veuillez réessayer ou contacter directement la clinique"
+      });
+      
       setMessages(prev => [
         ...prev,
         { 
           role: 'assistant', 
-          content: "⚡ Problème de connexion. Veuillez réessayer ou contacter directement la clinique."
+          content: "Désolé, je rencontre des difficultés techniques. 😔\n\nVous pouvez nous contacter directement :\n📞 33 869 64 90\n📞 77 822 92 45\n📍 Dakar, Sacré Coeur 3",
+          id: Date.now().toString()
         }
       ]);
     } finally {
@@ -53,96 +80,156 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-gray-900 dark:to-emerald-900/20">
-      <header className="p-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-emerald-100 dark:border-emerald-800 shadow-sm">
-        <div className="container mx-auto flex justify-between items-center">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-emerald-50/95 to-teal-50/95 dark:from-gray-950 dark:to-emerald-950/95">
+      {/* Header */}
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="sticky top-0 z-10 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-emerald-100/50 dark:border-emerald-900/50 shadow-sm"
+      >
+        <div className="container mx-auto flex justify-between items-center max-w-6xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path fillRule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-              </svg>
-            </div>
+            <motion.div 
+              whileHover={{ rotate: 15 }}
+              className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/80 text-emerald-600 dark:text-emerald-400 shadow-inner"
+            >
+              <Bot className="w-5 h-5" />
+            </motion.div>
             <div>
-              <h1 className="text-xl font-bold text-emerald-700 dark:text-emerald-300">Clinique de l'Amitié</h1>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">Dakar • Assistant Virtuel</p>
+              <h1 className="text-lg font-bold text-emerald-700 dark:text-emerald-300">AmiBot Assistant</h1>
+              <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">Clinique de l'Amitié • Dakar</p>
             </div>
           </div>
-          <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
-            En ligne
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              En ligne
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-emerald-600 dark:text-emerald-400"
+              onClick={() => router.push('/contact')}
+            >
+              Contact humain
+            </Button>
+          </div>
         </div>
-      </header>
+      </motion.header>
 
+      {/* Chat Container */}
       <main className="flex-1 overflow-y-auto p-4 container mx-auto max-w-3xl">
         <div className="space-y-4">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[90%] lg:max-w-[80%] px-4 py-3 rounded-2xl ${
-                  msg.role === 'user'
-                    ? 'bg-emerald-600 text-white rounded-br-none shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-none shadow border border-gray-100 dark:border-gray-700'
-                }`}
+          <AnimatePresence>
+            {messages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                <div className={`text-xs mt-1 ${msg.role === 'user' ? 'text-emerald-200' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {msg.role === 'user' ? 'Vous' : 'AmiBot'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <div
+                  className={`max-w-[90%] lg:max-w-[80%] px-4 py-3 rounded-2xl ${
+                    msg.role === 'user'
+                      ? 'bg-emerald-600 text-white rounded-br-none shadow-md'
+                      : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-none shadow border border-gray-100 dark:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {msg.role === 'assistant' && (
+                      <div className="p-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">
+                        <Bot className="w-4 h-4" />
+                      </div>
+                    )}
+                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {msg.role === 'user' && (
+                      <div className="p-1 rounded-full bg-emerald-700 text-white">
+                        <User className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div className={`text-xs mt-2 flex items-center gap-1 ${
+                    msg.role === 'user' 
+                      ? 'text-emerald-200 justify-end' 
+                      : 'text-gray-500 dark:text-gray-400 justify-start'
+                  }`}>
+                    {msg.role === 'user' ? 'Vous' : 'AmiBot'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
           {isLoading && (
-            <div className="flex justify-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
               <div className="max-w-[80%] px-4 py-3 rounded-2xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-none shadow border border-gray-100 dark:border-gray-700">
-                <div className="flex space-x-2 items-center">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                  <span className="text-sm ml-2 text-emerald-600 dark:text-emerald-300">Réponse en cours...</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                  <span className="text-sm text-emerald-600 dark:text-emerald-300">AmiBot consulte nos ressources...</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
+          
           <div ref={messagesEndRef} />
         </div>
       </main>
 
-      <footer className="p-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-emerald-100 dark:border-emerald-800">
+      {/* Input Area */}
+      <motion.footer 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="sticky bottom-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-emerald-100/50 dark:border-emerald-900/50 shadow-lg"
+      >
         <div className="container mx-auto max-w-3xl">
           <div className="relative flex gap-2">
-            <input
+            <Input
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Écrivez votre message..."
+              placeholder="Posez votre question..."
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-              className="flex-1 pl-5 pr-12 py-3 rounded-full border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent shadow-sm"
+              className="flex-1 pl-5 pr-12 py-4 rounded-full border border-emerald-200 dark:border-emerald-700 bg-white dark:bg-gray-800 focus-visible:ring-emerald-400 shadow-sm"
               disabled={isLoading}
             />
-            <button
+            <Button
               onClick={handleSendMessage}
               disabled={isLoading || !message.trim()}
-              className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full ${
+              size="icon"
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full ${
                 message.trim() 
-                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md' 
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-              } transition-colors`}
+              } transition-all`}
               aria-label="Envoyer le message"
-              title="Envoyer le message"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-              </svg>
-            </button>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
           </div>
-          <p className="text-center mt-3 text-xs text-emerald-600 dark:text-emerald-400">
-            Réponses générées par intelligence artificielle • Consultez un professionnel pour des diagnostics
-          </p>
+          
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+              Réponses générées par notre système RAG • Consultez un professionnel pour des conseils médicaux
+            </p>
+          </div>
         </div>
-      </footer>
+      </motion.footer>
     </div>
   );
 }

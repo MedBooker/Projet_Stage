@@ -9,7 +9,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const token = sessionStorage.getItem("auth_token");
     if (!token) {
-      router.replace("/(auth)/login");
+      router.replace("/login");
     } else {
       setLoading(false);
     }

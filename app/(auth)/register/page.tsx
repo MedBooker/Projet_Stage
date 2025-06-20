@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { z } from 'zod';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function RegisterPage() {
       fields: ['email', 'numeroDeTelephone', 'adresse', 'assurance']
     },
     {
-      title: 'Mot de Passe',
+      title: 'Sécurité du Compte',
       fields: ['password', 'confirmPassword']
     }
   ];
@@ -88,18 +89,21 @@ export default function RegisterPage() {
 
   const nextStep = () => {
     if (isStepValid()) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
+    } else {
+      toast.warning("Champs manquants", {
+        description: "Veuillez remplir tous les champs obligatoires avant de continuer."
+      });
     }
   };
 
-  const prevStep = () => setCurrentStep(currentStep - 1);
+  const prevStep = () => setCurrentStep(prev => prev - 1);
 
   const isStepValid = () => {
     const currentFields = steps[currentStep].fields;
 
     return currentFields.every(field => {
-      if (field === 'assurance') return true; 
-
+      if (field === 'assurance') return true;
       const value = formData[field as keyof typeof formData];
       return value !== null && value !== '';
     });
@@ -109,7 +113,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/register', {
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/register-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,21 +124,21 @@ export default function RegisterPage() {
       const data = await response.json();
       if (!response.ok) {
         toast.error("Erreur", {
-          description: data.message || "Une erreur est survenue lors de l'inscription"
+          description: data.message || "Une erreur est survenue lors de la demande d'inscription"
         });
         return;
       }
-      toast.success("Inscription réussie", {
-        description: "Redirection vers la connexion...",
+      toast.success("Demande envoyée", {
+        description: "Votre demande d'inscription a été soumise avec succès. Vous recevrez un email une fois votre compte validé.",
         action: {
-          label: "Se connecter",
-          onClick: () => router.push('/login')
+          label: "OK",
+          onClick: () => router.push('/')
         },
       });
-      setTimeout(() => router.push('/login'), 1500);
+      setTimeout(() => router.push('/'), 3000);
     } catch (error) {
       toast.error("Erreur", {
-        description: "Une erreur est survenue lors de l'inscription"
+        description: "Une erreur est survenue lors de la demande d'inscription"
       });
     } finally {
       setIsLoading(false);
@@ -145,10 +149,16 @@ export default function RegisterPage() {
     switch (currentStep) {
       case 0:
         return (
-          <>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <Label htmlFor="prenom">Prénom *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="prenom" className="text-sm font-medium text-gray-700 dark:text-gray-300">Prénom *</Label>
                 <Input
                   id="prenom"
                   name="prenom"
@@ -156,11 +166,11 @@ export default function RegisterPage() {
                   value={formData.prenom}
                   onChange={handleChange}
                   required
-                  className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                  className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                 />
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="nom">Nom *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="nom" className="text-sm font-medium text-gray-700 dark:text-gray-300">Nom *</Label>
                 <Input
                   id="nom"
                   name="nom"
@@ -168,28 +178,28 @@ export default function RegisterPage() {
                   value={formData.nom}
                   onChange={handleChange}
                   required
-                  className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                  className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <Label htmlFor="sexe">Sexe *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="sexe" className="text-sm font-medium text-gray-700 dark:text-gray-300">Sexe *</Label>
                 <Select
                   value={formData.sexe}
                   onValueChange={(value) => handleSelectChange('sexe', value)}
                 >
-                  <SelectTrigger className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
+                  <SelectTrigger className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
                     <SelectValue placeholder="Sélectionnez" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
                     <SelectItem value="homme">Homme</SelectItem>
                     <SelectItem value="femme">Femme</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="dateDeNaissance">Date de naissance *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="dateDeNaissance" className="text-sm font-medium text-gray-700 dark:text-gray-300">Date de naissance *</Label>
                 <Input
                   id="dateDeNaissance"
                   name="dateDeNaissance"
@@ -198,17 +208,23 @@ export default function RegisterPage() {
                   value={formData.dateDeNaissance}
                   onChange={handleChange}
                   required
-                  className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                  className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                 />
               </div>
             </div>
-          </>
+          </motion.div>
         );
       case 1:
         return (
-          <>
-            <div className="space-y-3">
-              <Label htmlFor="email">Email *</Label>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email *</Label>
               <Input
                 id="email"
                 name="email"
@@ -217,11 +233,11 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
               />
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="numeroDeTelephone">Numéro de téléphone *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="numeroDeTelephone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Numéro de téléphone *</Label>
               <Input
                 id="numeroDeTelephone"
                 name="numeroDeTelephone"
@@ -243,14 +259,14 @@ export default function RegisterPage() {
                   setFormData(prev => ({ ...prev, numeroDeTelephone: displayValue }));
                 }}
                 required
-                className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Format attendu : +221 70 398 55 44
               </p>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="adresse">Adresse *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="adresse" className="text-sm font-medium text-gray-700 dark:text-gray-300">Adresse *</Label>
               <Input
                 id="adresse"
                 name="adresse"
@@ -258,81 +274,86 @@ export default function RegisterPage() {
                 value={formData.adresse}
                 onChange={handleChange}
                 required
-                className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
+                className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
               />
             </div>
-            <div className="space-y-3">
-      <Label htmlFor="assurance">Assurance maladie</Label>
-      <div>
-        {isAutreAssurance && formData.assurance !== 'Aucune' ? (
-          <Input
-            id="otherAssurance"
-            placeholder="Entrez le nom de votre assurance"
-            value={autreAssuranceValue}
-            onChange={(e) => {
-              setAutreAssuranceValue(e.target.value);
-              setFormData(prev => ({ ...prev, assurance: e.target.value }));
-            }}
-            className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500"
-            disabled={formData.assurance === 'Aucune'}
-          />
-        ) : (
-          <Select
-            value={formData.assurance === 'Aucune' ? '' : formData.assurance}
-            onValueChange={(value) => {
-              if (value === 'Autre') {
-                setIsAutreAssurance(true);
-                setFormData(prev => ({ ...prev, assurance: '' }));
-              } else {
-                setIsAutreAssurance(false);
-                setFormData(prev => ({ ...prev, assurance: value }));
-              }
-            }}
-            disabled={formData.assurance === 'Aucune'}
-          >
-            <SelectTrigger className="dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500">
-              <SelectValue placeholder="Sélectionnez votre assurance" />
-            </SelectTrigger>
-            <SelectContent>
-              {assurances.map((assurance) => (
-                <SelectItem key={assurance} value={assurance}>
-                  {assurance}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="assurance" className="text-sm font-medium text-gray-700 dark:text-gray-300">Assurance maladie</Label>
+              <div>
+                {isAutreAssurance && formData.assurance !== 'Aucune' ? (
+                  <Input
+                    id="otherAssurance"
+                    placeholder="Entrez le nom de votre assurance"
+                    value={autreAssuranceValue}
+                    onChange={(e) => {
+                      setAutreAssuranceValue(e.target.value);
+                      setFormData(prev => ({ ...prev, assurance: e.target.value }));
+                    }}
+                    className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                    disabled={formData.assurance === 'Aucune'}
+                  />
+                ) : (
+                  <Select
+                    value={formData.assurance === 'Aucune' ? '' : formData.assurance}
+                    onValueChange={(value) => {
+                      if (value === 'Autre') {
+                        setIsAutreAssurance(true);
+                        setFormData(prev => ({ ...prev, assurance: '' }));
+                      } else {
+                        setIsAutreAssurance(false);
+                        setFormData(prev => ({ ...prev, assurance: value }));
+                      }
+                    }}
+                    disabled={formData.assurance === 'Aucune'}
+                  >
+                    <SelectTrigger className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
+                      <SelectValue placeholder="Sélectionnez votre assurance" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
+                      {assurances.map((assurance) => (
+                        <SelectItem key={assurance} value={assurance}>
+                          {assurance}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
 
-      <div className="flex items-center space-x-2 mt-4">
-        <input
-          type="checkbox"
-          id="noInsurance"
-          checked={formData.assurance === 'Aucune'}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setFormData(prev => ({ ...prev, assurance: 'Aucune' }));
-              setIsAutreAssurance(false);
-              setAutreAssuranceValue('');
-            } else {
-              setFormData(prev => ({ ...prev, assurance: '' }));
-            }
-          }}
-          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-        />
-        <label htmlFor="noInsurance" className="text-sm text-gray-700 dark:text-gray-300">
-          Je n'ai pas d'assurance maladie
-        </label>
-      </div>
-
+              <div className="flex items-center space-x-2 mt-3">
+                <input
+                  type="checkbox"
+                  id="noInsurance"
+                  checked={formData.assurance === 'Aucune'}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setFormData(prev => ({ ...prev, assurance: 'Aucune' }));
+                      setIsAutreAssurance(false);
+                      setAutreAssuranceValue('');
+                    } else {
+                      setFormData(prev => ({ ...prev, assurance: '' }));
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:text-emerald-500 dark:border-gray-600"
+                />
+                <label htmlFor="noInsurance" className="text-sm text-gray-700 dark:text-gray-300">
+                  Je n'ai pas d'assurance maladie
+                </label>
+              </div>
             </div>
-          </>
+          </motion.div>
         );
       case 2:
         return (
-          <>
-            <div className="space-y-3">
-              <Label htmlFor="password">Mot de passe *</Label>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-6"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe *</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -342,7 +363,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500 pr-10"
+                  className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 pr-10"
                 />
                 <button
                   type="button"
@@ -352,13 +373,13 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-3">
                 {passwordRequirements.map(req => (
                   <div key={req.id} className="flex items-center text-xs">
                     {req.validator(formData.password) ? (
-                      <Check className="h-3 w-3 text-emerald-500 mr-2" />
+                      <Check className="h-3.5 w-3.5 text-emerald-500 mr-2" />
                     ) : (
-                      <X className="h-3 w-3 text-gray-400 mr-2" />
+                      <X className="h-3.5 w-3.5 text-gray-400 mr-2" />
                     )}
                     <span className={req.validator(formData.password) ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"}>
                       {req.text}
@@ -367,8 +388,8 @@ export default function RegisterPage() {
                 ))}
               </div>
             </div>
-            <div className="space-y-3">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirmer le mot de passe *</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -378,7 +399,7 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-emerald-500 pr-10"
+                  className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 pr-10"
                 />
                 <button
                   type="button"
@@ -388,8 +409,11 @@ export default function RegisterPage() {
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="text-xs text-red-500 dark:text-red-400 mt-1">Les mots de passe ne correspondent pas</p>
+              )}
             </div>
-          </>
+          </motion.div>
         );
       default:
         return null;
@@ -397,70 +421,97 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-950 dark:to-gray-900 px-4 py-12">
-      <div className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl w-full max-w-md border border-emerald-100/50 dark:border-emerald-900/30">
-        {/* Progress bar */}
-        <div className="mb-6">
-          <div className="flex justify-between mb-2">
-            {steps.map((step, index) => (
-              <div key={index} className={`w-8 h-8 rounded-full flex items-center justify-center ${index <= currentStep ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                {index + 1}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50/90 via-teal-50/90 to-blue-50/90 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-4 py-12">
+      <div className="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-full max-w-md border border-emerald-100/30 dark:border-emerald-900/20">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Créer une demande d'inscription</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {steps[currentStep].title}
+          </p>
+        </div>
+
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-2">
+            {steps.map((_, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${index <= currentStep ? 'bg-emerald-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                  {index + 1}
+                </div>
               </div>
             ))}
           </div>
-          <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-emerald-600 rounded-full transition-all duration-300" 
-              style={{ width: `${(currentStep + 1) * 33.33}%` }}
+          <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-emerald-600 rounded-full"
+              initial={{ width: `${(currentStep) * 33.33}%` }}
+              animate={{ width: `${(currentStep + 1) * 33.33}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {renderStep()}
+          <AnimatePresence mode="wait">
+            {renderStep()}
+          </AnimatePresence>
+
           <div className="mt-8 flex justify-between">
-            {currentStep > 0 && (
+            {currentStep > 0 ? (
               <Button
                 type="button"
                 variant="outline"
                 onClick={prevStep}
                 disabled={isLoading}
-                className="text-emerald-600 dark:text-emerald-400"
+                className="gap-1.5 px-4 py-2.5 text-sm font-medium"
               >
+                <ChevronLeft className="h-4 w-4" />
                 Précédent
               </Button>
+            ) : (
+              <div /> 
             )}
+            
             {currentStep < steps.length - 1 ? (
               <Button
                 type="button"
                 onClick={nextStep}
                 disabled={!isStepValid() || isLoading}
-                className="ml-auto"
+                className="ml-auto gap-1.5 px-4 py-2.5 text-sm font-medium"
               >
                 Suivant
+                <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
               <Button
                 type="submit"
-                disabled={isLoading || formData.password !== formData.confirmPassword}
-                className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white"
+                disabled={isLoading || formData.password !== formData.confirmPassword || passwordErrors.length > 0}
+                className="ml-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4 py-2.5 text-sm font-medium shadow-md hover:shadow-emerald-500/20 dark:hover:shadow-emerald-500/10 transition-all"
               >
                 {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-4 w-4 mr-2 text-white" viewBox="0 0 24 24">
+                  <span className="flex items-center justify-center gap-1.5">
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Création...
+                    Envoi...
                   </span>
-                ) : "S'inscrire"}
+                ) : (
+                  <span className="flex items-center justify-center gap-1.5">
+                    Envoyer la demande
+                  </span>
+                )}
               </Button>
             )}
           </div>
         </form>
-        <div className="mt-6 pt-6 border-t border-gray-200/50 dark:border-gray-800/50 text-center">
+
+        <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-700/50 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Déjà un compte ?{' '}
-            <a href="/login" className="text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 hover:underline">
+            <a 
+              href="/login" 
+              className="text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 hover:underline font-medium transition-colors"
+            >
               Se connecter
             </a>
           </p>
