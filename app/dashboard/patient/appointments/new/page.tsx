@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,42 +13,6 @@ import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
-const specialties = [
-  "Cardiologie",
-  "Dermatologie",
-  "Pédiatrie",
-  "Gynécologie",
-  "Neurologie",
-  "Orthopédie"
-];
-
-const doctors = [
-  {
-    id: 'diallo',
-    name: 'Dr. Ibrahima DIALLO',
-    specialty: 'Cardiologie',
-    availability: ['Monday', 'Wednesday', 'Friday']
-  },
-  {
-    id: 'ndiaye',
-    name: 'Dr. Moussa NDIAYE',
-    specialty: 'Dermatologie',
-    availability: ['Tuesday', 'Thursday']
-  },
-  {
-    id: 'camara',
-    name: 'Dr. Elisabeth CAMARA',
-    specialty: 'Pédiatrie',
-    availability: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-  }
-];
-
-const timeSlots = Array.from({ length: 16 }, (_, i) => {
-  const hour = 8 + Math.floor(i / 2);
-  const minute = i % 2 === 0 ? '00' : '30';
-  return `${hour.toString().padStart(2, '0')}:${minute}`;
-});
-
 const formSchema = z.object({
   personalInfo: z.object({
     fullName: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
@@ -56,6 +20,7 @@ const formSchema = z.object({
     phone: z.string().min(10, "Le numéro doit contenir au moins 10 chiffres").optional(),
   }),
   appointmentInfo: z.object({
+    consultationType: z.string().min(1, "Veuillez sélectionner un type de consultation"),
     specialty: z.string().min(1, "Veuillez sélectionner une spécialité"),
     doctor: z.string().min(1, "Veuillez sélectionner un médecin"),
     date: z.string().min(1, "Veuillez sélectionner une date"),
@@ -70,10 +35,24 @@ export default function NewAppointmentPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
+  type Doctor = {
+    id: string;
+    name: string;
+    specialty: string;
+    availability: string[];
+  };
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [consultationTypes, setConsultationTypes] = useState(["Consultation", "Interventions Medicales", "Examens d'Imagerie Médicale", "Analyses Médicales"]);
+  const [selectedConsultationType, setSelectedConsultationType] = useState("");
   const [filteredDoctors, setFilteredDoctors] = useState(doctors);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [creneauId, setCreneauId] = useState<string | null>(null);
+  const [day, setNormalizedDayName] = useState<string>(""); 
+   
+  const [specialties, setSpecialties] = useState([]);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue, trigger } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -84,6 +63,7 @@ export default function NewAppointmentPage() {
         phone: ''
       },
       appointmentInfo: {
+        consultationType: '',
         specialty: '',
         doctor: '',
         date: '',
@@ -94,6 +74,65 @@ export default function NewAppointmentPage() {
   });
 
   const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+     console.log('Token formaté:', token);
+    const getSpecialties = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Patients/get-specialties', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch specialities');
+        const data = await response.json();
+        setSpecialties(data.specialties); 
+      } catch (error) {
+        console.error("Error fetching specialities:", error);
+      }
+    };
+
+    getSpecialties();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Patients/get-doctors', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        const data = await response.json();
+  
+        const formattedDoctors = data.map((doctor: {id: string; prenom: string; nom: string; specialite: string; horaires_par_jour?: Record<string, any>;}) => ({
+          id: doctor.id,
+          name: `Dr. ${doctor.prenom} ${doctor.nom}`,
+          specialty: doctor.specialite,
+          availability: doctor.horaires_par_jour 
+            ? Object.keys(doctor.horaires_par_jour) 
+            : [],
+          horaires: doctor.horaires_par_jour
+        }));
+        setDoctors(formattedDoctors);
+      } catch (error) {
+        console.error("Erreur lors du chargement des médecins:", error);
+      }
+    };
+
+    if (token) {
+      fetchDoctors();
+    }
+  }, [token]);
 
   const handleSpecialtyChange = (value: string) => {
     setSelectedSpecialty(value);
@@ -115,7 +154,6 @@ export default function NewAppointmentPage() {
     setValue('appointmentInfo.time', '');
     setAvailableTimes([]);
   };
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     setValue('appointmentInfo.date', date);
@@ -123,14 +161,15 @@ export default function NewAppointmentPage() {
     
     if (selectedDoctor && date) {
       const selectedDate = new Date(date);
-      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const dayName = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' });
+      const normalizedDayName = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
       
-      if (selectedDoctor.availability.includes(dayName)) {
-        const availableTimes = timeSlots
-          .filter((_, index) => index % 3 !== 0) 
-          .map(time => time);
-        
-        setAvailableTimes(availableTimes);
+      if (selectedDoctor.availability.includes(normalizedDayName)) {
+        const creneauxDuJour = selectedDoctor.horaires[normalizedDayName]
+        const horaires = creneauxDuJour.map((creneau: { heure: string }) => creneau.heure);
+        setCreneauId(creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau));
+        setAvailableTimes(horaires);
+        setNormalizedDayName(normalizedDayName);
       } else {
         setAvailableTimes([]);
         toast.warning("Indisponible", {
@@ -142,11 +181,19 @@ export default function NewAppointmentPage() {
     }
   };
 
+  const handleTimeChange = (day: string, selectedTime: string) => {
+    const selectedCreneau = selectedDoctor.horaires[day].find((creneau: { heure: string }) => creneau.heure === selectedTime);
+    const selectedCreneauId = selectedCreneau ? selectedCreneau.idCreneau : null;
+    setCreneauId(selectedCreneauId);
+    setValue('appointmentInfo.time', selectedTime);
+    console.log("Creneau ID sélectionné:", selectedCreneauId); 
+  };
+
   const nextStep = async () => {
     let isValid = false;
     
     if (step === 1) {
-      isValid = await trigger('personalInfo');
+     isValid = await trigger('personalInfo');
     } else if (step === 2) {
       isValid = await trigger('appointmentInfo');
     }
@@ -162,9 +209,32 @@ export default function NewAppointmentPage() {
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
+    const formDataToSend = {
+      personalInfo: data.personalInfo, 
+      appointmentInfo: {
+        ...data.appointmentInfo,
+        doctor: selectedDoctor?.name,
+        creneauId, 
+      },
+      reason: data.reason, 
+  };
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/create-appointment', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          
+        },
+        body: JSON.stringify(formDataToSend), 
+      });
+
+      if (!response.ok) {
+        throw new Error('Échec de la création du rendez-vous');
+      }
+      const responseData = await response.json();
       
       toast.success("Rendez-vous confirmé", {
         description: (
@@ -298,6 +368,26 @@ export default function NewAppointmentPage() {
                 className="space-y-6"
               >
                 <div className="space-y-3">
+                  <Label htmlFor="consultationType">
+                    Type de Rendez-Vous <span className="text-red-500">*</span>
+                  </Label>
+                  <Select onValueChange={(value) => setValue('appointmentInfo.consultationType', value)} value={watch('appointmentInfo.consultationType')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un type de consultation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {consultationTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.appointmentInfo?.consultationType && (
+                    <p className="text-sm text-red-500">{errors.appointmentInfo.consultationType.message}</p>
+                  )}
+                </div>
+                <div className="space-y-3">
                   <Label htmlFor="specialty">
                     Spécialité <span className="text-red-500">*</span>
                   </Label>
@@ -358,16 +448,7 @@ export default function NewAppointmentPage() {
                       <div className="text-sm text-gray-600 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <p className="flex items-center gap-2">
                           <Stethoscope className="w-4 h-4" />
-                          {selectedDoctor.availability.map((day: string) => {
-                            const daysMap: Record<string, string> = {
-                              'Monday': 'Lundi',
-                              'Tuesday': 'Mardi',
-                              'Wednesday': 'Mercredi',
-                              'Thursday': 'Jeudi',
-                              'Friday': 'Vendredi'
-                            };
-                            return daysMap[day] || day;
-                          }).join(', ')}
+                          {selectedDoctor.availability.join(', ')}
                         </p>
                       </div>
                     )}
@@ -396,7 +477,7 @@ export default function NewAppointmentPage() {
                       Heure préférée <span className="text-red-500">*</span>
                     </Label>
                     <Select 
-                      onValueChange={(value) => setValue('appointmentInfo.time', value)}
+                      onValueChange={(value) => handleTimeChange(day, value)}
                       value={watch('appointmentInfo.time')}
                       disabled={!watch('appointmentInfo.date') || availableTimes.length === 0}
                     >
@@ -535,3 +616,4 @@ export default function NewAppointmentPage() {
     </div>
   );
 }
+
