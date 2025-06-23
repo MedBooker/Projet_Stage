@@ -27,7 +27,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Medecins/login', {
+      const response = await fetch('http://127.0.0.1:8000/api/Admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -55,13 +55,13 @@ export default function LoginPage() {
       );
 
       toast.success("Connexion réussie", {
-        description: "Bienvenue sur votre espace médecin.",
+        description: "Bienvenue sur votre espace admin.",
       });
 
       window.dispatchEvent(new Event('storage'));
 
       setTimeout(() => {
-        router.push('/dashboard/medecin');
+        router.push('/dashboard/admin');
       }, 1000);
     } catch (error) {
       toast.error("Erreur serveur", {
@@ -76,7 +76,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-950 dark:to-gray-900 px-4">
       <div className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-md border border-emerald-100 dark:border-emerald-900/50">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">Espace Médecin</h1>
+          <h1 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">Espace Admin</h1>
           <p className="text-gray-500 dark:text-gray-400">Connectez-vous à votre compte</p>
         </div>
 
