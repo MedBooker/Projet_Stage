@@ -10,10 +10,7 @@ class CreneauHoraire extends Model
     protected $connexion = 'mongodb';
     protected $collection = 'creneaux_horaires';
     protected $fillable = [
-        'date',
-        'heureDebut',
-        'heureFin',
-        'est_disponible',
+        'jours',
         'idMedecin'
     ];
 }

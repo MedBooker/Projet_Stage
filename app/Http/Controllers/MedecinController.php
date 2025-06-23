@@ -11,6 +11,26 @@ use Illuminate\Support\Facades\Hash;
 class MedecinController extends Controller
 {
     //
+    public function register(Request $request){
+        $validated = $request->validate([
+            'adresseMail' => 'required|email|unique:patients,adresseMail',
+            'motDePasse' => 'required|min:6',
+            'prenom' => 'required|string|max:255',
+            'nom' => 'required|string|max:255',
+            'specialite' => 'required|string|max:255',
+        ]);
+        $medecin = Medecin::create([
+            'adresseMail' => $validated['adresseMail'],
+            'motDePasse' => bcrypt($validated['motDePasse']), 
+            'prenom' => $validated['prenom'],
+            'nom' => $validated['nom'],
+            'specialite' => $validated['specialite'],
+        ]);
+        return response()->json([
+            'message' => 'Medecin enregistré avec succès',
+            'patient' => $medecin
+        ]);
+    }
     public function login(Request $request) {
         $request->validate([
             'email' => 'required|email',
@@ -50,52 +70,50 @@ class MedecinController extends Controller
 
     public function addSchedule(Request $request) {
         $request->validate([
-            'date' => 'required|date',  
-            'heureDebut' => 'required|date_format:H:i',
-            'heureFin' => 'required|date_format:H:i',
+            'creneaux' => 'required|array|min:1',
+            'creneaux.*.jour' => 'required',
+            'creneaux.*.heureDebut' => 'required|date_format:H:i',
+            'creneaux.*.heureFin' => 'required|date_format:H:i',
+            'creneaux.*.nbreLimitePatient' => 'required|integer|min:1'
         ]);
         $medecin = $request->user('medecin');
-        $data= [
-            'date' => $request->date,
-            'heureDebut' => $request->heureDebut,
-            'heureFin' => $request->heureFin,
-            'est_disponible' => true,
-            'idMedecin' => $medecin->_id
-        ];
-        $debut = Carbon::createFromFormat('H:i', $request->heureDebut);
-        $fin = Carbon::createFromFormat('H:i', $request->heureFin);
-        $creneauExiste = CreneauHoraire::where('date', $request->date)
-                                        ->where('heureDebut', $request->heureDebut)
-                                        ->where('heureFin', $request->heureFin)
-                                        ->where('idMedecin', $medecin->_id)
-                                        ->exists();
-        if ($creneauExiste) {
-            return response()->json([
-                'message' => 'Ce créneau horaire existe déjà'
-            ], 400);
+         $creneauxFormates = [];
+
+    // Formatage avec foreach
+        foreach ($request->creneaux as $creneau) {
+            $creneauxFormates[] = [
+                'jour' => $creneau['jour'],
+                'heureDebut' => $creneau['heureDebut'],
+                'heureFin' => $creneau['heureFin'],
+                'nbreLimitePatient' => $creneau['nbreLimitePatient'],
+                'est_disponible' => true
+            ];
         }
-        $chevauchement = CreneauHoraire::where('date', $request->date)
-        ->where('idMedecin', $medecin->_id)
-        ->where(function ($query) use ($debut, $fin) {
-            // Cas 1: Pour un chevauchement partiel (ex: 8h-8h30 vs 8h15-8h45)
-            $query->where('heureDebut', '<', $fin->format('H:i'))
-                  ->where('heureFin', '>', $debut->format('H:i'));
-        })
-        ->orWhere(function ($query) use ($debut, $fin) {
-            // Cas 2: Pour un créneau englobé (ex: 8h-9h vs 8h15-8h45)
-            $query->where('heureDebut', '>=', $debut->format('H:i'))
-                  ->where('heureFin', '<=', $fin->format('H:i'));
-        })
-        ->exists();
-        if ($chevauchement) {
-            return response()->json([
-                'message' => 'Ce créneau chevauche un créneau existant'
-            ], 400);
+
+        foreach ($creneauxFormates as $creneau) {
+            $conflict = CreneauHoraire::where('idMedecin', $medecin->_id)
+                ->where('jours.jour', $creneau['jour'])
+                ->where(function($q) use ($creneau) {
+                    $q->where('jours.heureDebut', '<', $creneau['heureFin'])
+                      ->where('jours.heureFin', '>', $creneau['heureDebut']);
+                })->exists();
+
+            if ($conflict) {
+                return response()->json([
+                    'message' => 'Conflit détecté pour le créneau : ' . $creneau['jour'] . ' ' . 
+                             $creneau['heureDebut'] . '-' . $creneau['heureFin']
+                ], 409);
+            }
         }
-        $creneau = CreneauHoraire::create($data);
-        return response()->json([
-            'message' => 'Créneau horaire ajouté avec succès',
-            'creneau' => $creneau
+
+        $groupeCreneaux = CreneauHoraire::create([
+            'idMedecin' => $medecin->_id,
+            'jours' => $creneauxFormates
         ]);
+
+        return response()->json([
+            'message' => count($creneauxFormates) . ' créneau(x) groupés ajoutés',
+            'data' => $groupeCreneaux
+        ], 201);
     }
 }
