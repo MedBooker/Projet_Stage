@@ -1,7 +1,5 @@
 export const dynamicSetting = 'force-dynamic';
 
-'use client';
-
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
