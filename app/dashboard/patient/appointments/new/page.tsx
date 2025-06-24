@@ -51,7 +51,6 @@ export default function NewAppointmentPage() {
   const [token, setToken] = useState<string | null>(null);
   const [creneauId, setCreneauId] = useState<string | null>(null);
   const [day, setNormalizedDayName] = useState<string>(""); 
-   
   const [specialties, setSpecialties] = useState([]);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue, trigger } = useForm<FormData>({
@@ -81,7 +80,7 @@ export default function NewAppointmentPage() {
 
   useEffect(() => {
     if (!token) return;
-     console.log('Token formaté:', token);
+
     const getSpecialties = async () => {
       try {
         const response = await fetch('http://127.0.0.1:8000/api/Patients/get-specialties', {
@@ -113,7 +112,6 @@ export default function NewAppointmentPage() {
           }
         });
         const data = await response.json();
-  
         const formattedDoctors = data.map((doctor: {id: string; prenom: string; nom: string; specialite: string; horaires_par_jour?: Record<string, any>;}) => ({
           id: doctor.id,
           name: `Dr. ${doctor.prenom} ${doctor.nom}`,
@@ -128,7 +126,6 @@ export default function NewAppointmentPage() {
         console.error("Erreur lors du chargement des médecins:", error);
       }
     };
-
     if (token) {
       fetchDoctors();
     }
@@ -154,26 +151,33 @@ export default function NewAppointmentPage() {
     setValue('appointmentInfo.time', '');
     setAvailableTimes([]);
   };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     setValue('appointmentInfo.date', date);
     setValue('appointmentInfo.time', '');
-    
     if (selectedDoctor && date) {
       const selectedDate = new Date(date);
-      const dayName = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' });
-      const normalizedDayName = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
+
       
+      const dayName = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' });
+
+      
+      const normalizedDayName = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
+
+      setNormalizedDayName(normalizedDayName);
+
       if (selectedDoctor.availability.includes(normalizedDayName)) {
-        const creneauxDuJour = selectedDoctor.horaires[normalizedDayName]
+        const creneauxDuJour = selectedDoctor.horaires?.[normalizedDayName] || [];
         const horaires = creneauxDuJour.map((creneau: { heure: string }) => creneau.heure);
-        setCreneauId(creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau));
+        const ids = creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau);
+
         setAvailableTimes(horaires);
-        setNormalizedDayName(normalizedDayName);
+        setCreneauId(ids.length > 0 ? ids[0] : null);
       } else {
         setAvailableTimes([]);
         toast.warning("Indisponible", {
-          description: `Dr. ${selectedDoctor.name} ne travaille pas le ${selectedDate.toLocaleDateString('fr-FR', { weekday: 'long' })}`,
+          description: `Dr. ${selectedDoctor.name} ne travaille pas le ${normalizedDayName}`,
         });
       }
     } else {
@@ -182,22 +186,21 @@ export default function NewAppointmentPage() {
   };
 
   const handleTimeChange = (day: string, selectedTime: string) => {
-    const selectedCreneau = selectedDoctor.horaires[day].find((creneau: { heure: string }) => creneau.heure === selectedTime);
+    const selectedCreneau = selectedDoctor.horaires[day]?.find(
+      (creneau: { heure: string }) => creneau.heure === selectedTime
+    );
     const selectedCreneauId = selectedCreneau ? selectedCreneau.idCreneau : null;
     setCreneauId(selectedCreneauId);
     setValue('appointmentInfo.time', selectedTime);
-    console.log("Creneau ID sélectionné:", selectedCreneauId); 
   };
 
   const nextStep = async () => {
     let isValid = false;
-    
     if (step === 1) {
-     isValid = await trigger('personalInfo');
+      isValid = await trigger('personalInfo');
     } else if (step === 2) {
       isValid = await trigger('appointmentInfo');
     }
-    
     if (isValid) {
       setStep(step + 1);
     }
@@ -210,15 +213,14 @@ export default function NewAppointmentPage() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     const formDataToSend = {
-      personalInfo: data.personalInfo, 
+      personalInfo: data.personalInfo,
       appointmentInfo: {
         ...data.appointmentInfo,
         doctor: selectedDoctor?.name,
-        creneauId, 
+        creneauId,
       },
-      reason: data.reason, 
-  };
-    
+      reason: data.reason,
+    };
     try {
       const response = await fetch('http://127.0.0.1:8000/api/Patients/create-appointment', {
         method: 'POST',
@@ -226,16 +228,13 @@ export default function NewAppointmentPage() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          
         },
-        body: JSON.stringify(formDataToSend), 
+        body: JSON.stringify(formDataToSend),
       });
-
       if (!response.ok) {
         throw new Error('Échec de la création du rendez-vous');
       }
       const responseData = await response.json();
-      
       toast.success("Rendez-vous confirmé", {
         description: (
           <div className="space-y-2">
@@ -246,7 +245,6 @@ export default function NewAppointmentPage() {
           </div>
         ),
       });
-
       setTimeout(() => router.push('/dashboard/patient/appointments'), 2000);
     } catch (error) {
       toast.error("Erreur", {
@@ -258,9 +256,12 @@ export default function NewAppointmentPage() {
   };
 
   const appointmentDate = watch('appointmentInfo.date');
-  const selectedDay = appointmentDate ? new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' }) : null;
-  const isDoctorAvailable = selectedDoctor && appointmentDate 
-    ? selectedDoctor.availability.includes(selectedDay)
+  const selectedDay = appointmentDate
+    ? new Date(appointmentDate).toLocaleDateString('en-US', { weekday: 'long' })
+    : null;
+
+  const isDoctorAvailable = selectedDoctor && appointmentDate
+    ? selectedDoctor.availability.includes(day)
     : false;
 
   return (
@@ -300,15 +301,14 @@ export default function NewAppointmentPage() {
                 ))}
               </div>
             </div>
-            
             <p className="text-gray-600 dark:text-gray-400">
               {step === 1 && "Informations personnelles"}
               {step === 2 && "Spécialité et date"}
               {step === 3 && "Motif de consultation"}
             </p>
           </div>
-
           <form onSubmit={handleSubmit(onSubmit)}>
+            
             {step === 1 && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -316,6 +316,7 @@ export default function NewAppointmentPage() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
+                
                 <div className="space-y-3">
                   <Label htmlFor="fullName">
                     Nom complet <span className="text-red-500">*</span>
@@ -330,6 +331,7 @@ export default function NewAppointmentPage() {
                   )}
                 </div>
 
+                
                 <div className="space-y-3">
                   <Label htmlFor="email">
                     Email <span className="text-red-500">*</span>
@@ -345,6 +347,7 @@ export default function NewAppointmentPage() {
                   )}
                 </div>
 
+                
                 <div className="space-y-3">
                   <Label htmlFor="phone">Téléphone</Label>
                   <Input
@@ -360,6 +363,7 @@ export default function NewAppointmentPage() {
               </motion.div>
             )}
 
+            
             {step === 2 && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -367,6 +371,7 @@ export default function NewAppointmentPage() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
+                
                 <div className="space-y-3">
                   <Label htmlFor="consultationType">
                     Type de Rendez-Vous <span className="text-red-500">*</span>
@@ -387,6 +392,8 @@ export default function NewAppointmentPage() {
                     <p className="text-sm text-red-500">{errors.appointmentInfo.consultationType.message}</p>
                   )}
                 </div>
+
+                
                 <div className="space-y-3">
                   <Label htmlFor="specialty">
                     Spécialité <span className="text-red-500">*</span>
@@ -411,6 +418,7 @@ export default function NewAppointmentPage() {
                   )}
                 </div>
 
+                
                 {watch('appointmentInfo.specialty') && (
                   <div className="space-y-3">
                     <Label htmlFor="doctor">
@@ -443,7 +451,6 @@ export default function NewAppointmentPage() {
                     {errors.appointmentInfo?.doctor && (
                       <p className="text-sm text-red-500">{errors.appointmentInfo.doctor.message}</p>
                     )}
-                    
                     {selectedDoctor && (
                       <div className="text-sm text-gray-600 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                         <p className="flex items-center gap-2">
@@ -455,6 +462,7 @@ export default function NewAppointmentPage() {
                   </div>
                 )}
 
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <Label htmlFor="date">
@@ -471,7 +479,6 @@ export default function NewAppointmentPage() {
                       <p className="text-sm text-red-500">{errors.appointmentInfo.date.message}</p>
                     )}
                   </div>
-                  
                   <div className="space-y-3">
                     <Label htmlFor="time">
                       Heure préférée <span className="text-red-500">*</span>
@@ -504,6 +511,7 @@ export default function NewAppointmentPage() {
                   </div>
                 </div>
 
+                
                 {selectedDoctor && appointmentDate && (
                   <div className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
                     isDoctorAvailable
@@ -530,6 +538,7 @@ export default function NewAppointmentPage() {
               </motion.div>
             )}
 
+            
             {step === 3 && (
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -552,7 +561,6 @@ export default function NewAppointmentPage() {
                     Ex: Consultation de routine, douleurs, contrôle...
                   </p>
                 </div>
-
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   <h3 className="font-medium mb-3">Récapitulatif</h3>
                   <div className="space-y-2 text-sm">
@@ -568,6 +576,7 @@ export default function NewAppointmentPage() {
               </motion.div>
             )}
 
+            
             <div className="flex justify-between mt-8">
               {step > 1 ? (
                 <Button
@@ -581,7 +590,6 @@ export default function NewAppointmentPage() {
               ) : (
                 <div></div>
               )}
-
               {step < 3 ? (
                 <Button
                   type="button"
@@ -616,4 +624,3 @@ export default function NewAppointmentPage() {
     </div>
   );
 }
-
