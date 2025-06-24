@@ -1,5 +1,11 @@
+'use client';
+
+import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import VerifyEmailContent from '@/components/VerifyEmailContent';
+
+const VerifyEmailContent = dynamic(() => import('@/components/VerifyEmailContent'), {
+  ssr: false,
+});
 
 export default function VerifyEmailPage() {
   return (
