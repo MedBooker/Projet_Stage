@@ -82,6 +82,7 @@ class MedecinController extends Controller
     // Formatage avec foreach
         foreach ($request->creneaux as $creneau) {
             $creneauxFormates[] = [
+                'idCreneau' => 'creneau' . uniqid(),
                 'jour' => $creneau['jour'],
                 'heureDebut' => $creneau['heureDebut'],
                 'heureFin' => $creneau['heureFin'],

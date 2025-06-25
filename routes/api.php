@@ -16,6 +16,7 @@ Route::prefix('Patients')->group(function () {
         Route::put('update-profile', [PatientController::class, 'updateProfile']);
         Route::get('get-specialties', [PatientController::class, 'getSpecialties']);
         Route::get('get-doctors', [PatientController::class, 'getDoctors']);
+        Route::post('patient-limit', [PatientController::class, 'patientLimit']);
         Route::post('create-appointment', [PatientController::class, 'createAppointment']);
     });
 });

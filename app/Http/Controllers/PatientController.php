@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Medecin;
 use App\Models\Patient;
 use App\Mail\ConfirmMail;
+use App\Models\CreneauHoraire;
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
 use App\Models\PendingPatient;
@@ -165,7 +166,7 @@ class PatientController extends Controller
                     if ($horaire['est_disponible']) { 
                         $jour = $horaire['jour']; 
                         $horairesParJour[$jour][] = [
-                            'idCreneau' => $creneau->_id, 
+                            'idCreneau' => $horaire['idCreneau'], 
                             'heure' => $horaire['heureDebut'] . ' - ' . $horaire['heureFin']
                         ];
                     }
@@ -174,6 +175,31 @@ class PatientController extends Controller
             $medecin->horaires_par_jour = $horairesParJour;
         }
         return response()->json($medecins);
+    }
+
+    public function patientLimit(Request $request) {
+        $request->validate([
+            'creneauId' => 'required|string'
+        ]);
+        $nbrePatients = RendezVous::where('idCreneau', $request->creneauId)->count();
+        $creneau = CreneauHoraire::where('jours.idCreneau', $request->creneauId)->first();
+        foreach ($creneau->jours as $index => $horaire) {
+            if ($horaire['idCreneau'] == $request->creneauId) {
+                if ($nbrePatients >= $horaire['nbreLimitePatient']) {
+                    $jours = $creneau->jours;
+                    $jours[$index]['est_disponible'] = false;
+                    $creneau->update([
+                        'jours' => $jours
+                    ]);
+                    return response()->json([
+                        'message' => 'Le nombre limite de patients pour ce créneau a été atteint'
+                    ], 200);
+                }
+            }
+        }
+        return response()->json([
+            'message' => 'Le nombre limite de patients pour ce créneau n\'a pas encore été atteint'
+        ], 400);
     }
 
     public function createAppointment(Request $request){
@@ -203,7 +229,6 @@ class PatientController extends Controller
             'raison' => $validated['reason'],
             'idPatient' => $patient->_id
         ]);
-
         return response()->json([
             'message' => 'Rendez-vous créé avec succès',
             'rendez-vous' => $appointment
