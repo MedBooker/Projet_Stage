@@ -131,6 +131,29 @@ export default function NewAppointmentPage() {
     }
   }, [token]);
 
+  // useEffect(() => {
+  //   if (!token) return;
+
+  //   const patientLimit = async () => {
+  //     try {
+  //       const response = await fetch('http://127.0.0.1:8000/api/Patients/patient-limit', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`,
+  //           'Content-Type': 'application/json',
+  //           'Accept': 'application/json',
+  //         },
+  //          body: JSON.stringify({ creneauId }),
+  //       });
+  //       if (!response.ok) throw new Error('Failed to fetch specialities');
+  //     } catch (error) {
+  //       console.error("Error fetching specialities:", error);
+  //     }
+  //   };
+  //   if(creneauId)
+  //     patientLimit();
+  // }, [token, creneauId]);
+
   const handleSpecialtyChange = (value: string) => {
     setSelectedSpecialty(value);
     setValue('appointmentInfo.specialty', value);
@@ -170,10 +193,10 @@ export default function NewAppointmentPage() {
       if (selectedDoctor.availability.includes(normalizedDayName)) {
         const creneauxDuJour = selectedDoctor.horaires?.[normalizedDayName] || [];
         const horaires = creneauxDuJour.map((creneau: { heure: string }) => creneau.heure);
-        const ids = creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau);
+        // const ids = creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau);
 
         setAvailableTimes(horaires);
-        setCreneauId(ids.length > 0 ? ids[0] : null);
+        // setCreneauId(ids.length > 0 ? ids[0] : null);
       } else {
         setAvailableTimes([]);
         toast.warning("Indisponible", {
@@ -235,6 +258,19 @@ export default function NewAppointmentPage() {
         throw new Error('Échec de la création du rendez-vous');
       }
       const responseData = await response.json();
+      const patientLimitResponse = await fetch('http://127.0.0.1:8000/api/Patients/patient-limit', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ creneauId }),
+      });
+
+      if (!patientLimitResponse.ok) {
+        throw new Error('Failed to verify patient limit');
+      }
       toast.success("Rendez-vous confirmé", {
         description: (
           <div className="space-y-2">
@@ -522,14 +558,14 @@ export default function NewAppointmentPage() {
                       <>
                         <Check className="w-4 h-4" />
                         <span>
-                          Dr. {selectedDoctor.name} est disponible le {new Date(appointmentDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          {selectedDoctor.name} est disponible le {new Date(appointmentDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </span>
                       </>
                     ) : (
                       <>
                         <X className="w-4 h-4" />
                         <span>
-                          Dr. {selectedDoctor.name} n'est pas disponible le {new Date(appointmentDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          {selectedDoctor.name} n'est pas disponible le {new Date(appointmentDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </span>
                       </>
                     )}
