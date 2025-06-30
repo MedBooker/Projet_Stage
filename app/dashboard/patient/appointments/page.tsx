@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,11 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 type Appointment = {
-  id: number;
+  id: string;
   date: string;
   doctor: string;
+  creneau: string;
+  idCreneau: string;
   specialty: string;
   status: string;
   location: string;
@@ -28,48 +30,69 @@ type Appointment = {
 
 export default function AppointmentsPage() {
   const router = useRouter();
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: 1,
-      date: '2025-07-12T10:00:00',
-      doctor: 'Dr. Ibrahima DIALLO',
-      specialty: 'Dermatologie',
-      status: 'upcoming',
-      location: 'Clinique de l\'Amitié, Dakar',
-      notes: 'Prévoir une crème hydratante pour la consultation',
-      avatar: '/avatars/doctor1.jpg'
-    },
-    {
-      id: 2,
-      date: '2025-06-05T15:00:00',
-      doctor: 'Dr. Elisabeth CAMARA',
-      specialty: 'Pédiatrie',
-      status: 'completed',
-      location: 'Hôpital Général, Dakar',
-      notes: 'Prévoir un examen clinique complet',
-      avatar: '/avatars/doctor2.jpg'
-    },
-    {
-      id: 3,
-      date: '2025-05-20T14:00:00',
-      doctor: 'Dr. Gervais MENDY',
-      specialty: 'Cardiologie',
-      status: 'cancelled',
-      location: 'Institut Cardiovasculaire, Dakar',
-      notes: 'Rendez-vous annulé à votre demande'
-    },
-  ]);
+  const [token, setToken] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  const handleCancelAppointment = (id: number) => {
-    setAppointments(appointments.map(appt => 
-      appt.id === id ? { ...appt, status: 'cancelled', notes: 'Rendez-vous annulé' } : appt
-    ));
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  });
+
+  useEffect(() => {
+    const getAppointments = async () => {
+    try {
+      const response = await fetch ('http://127.0.0.1:8000/api/Patients/get-appointments', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch appointments');
+      const data = await response.json();
+       const formattedAppointments = data.map((appt: any) => ({
+        id: appt.id,  
+        date: appt.date,  
+        doctor: appt.medecin,
+        creneau: appt.creneau,
+        idCreneau: appt.idCreneau,
+        specialty: appt.specialite,
+        status: appt.status || 'upcoming',
+        location: 'Clinique de l\'Amitié, Dakar',
+        notes: 'Prévoir un examen clinique complet',
+      }));
+      setAppointments(formattedAppointments);
+      } catch (error) {
+        console.error("Error fetching specialities:", error);
+      }
+    };
+    getAppointments();
+  }, [token]);
+
+  const handleCancelAppointment = async (id: string, idCreneau: string) => {
+    // setAppointments(appointments.map(appt => 
+    //   appt.id === id ? { ...appt, status: 'cancelled', notes: 'Rendez-vous annulé' } : appt
+    // ));
+    
+    const response = await fetch(`http://127.0.0.1:8000/api/Patients/delete-appointments`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`, 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ id, idCreneau }),
+    });
+    console.log('test', idCreneau);
+    if (!response.ok) {
+      throw new Error('Erreur lors de la suppression du rendez-vous');
+    }
+    setAppointments(appointments.filter(appt => appt.id !== id));
     toast.success("Rendez-vous annulé", {
       description: "Votre rendez-vous a été annulé avec succès",
     });
   };
 
-  const handleReschedule = (id: number) => {
+  const handleReschedule = async (id: string) => {
     router.push(`/appointments/reschedule/${id}`);
   };
 
@@ -85,8 +108,6 @@ export default function AppointmentsPage() {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -119,7 +140,7 @@ export default function AppointmentsPage() {
               key={appt.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: appt.id * 0.1 }}
+              transition={{ duration: 0.3, delay: Number(appt.id) * 0.1 }}
               viewport={{ once: true }}
             >
               <Card className="bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
@@ -150,7 +171,7 @@ export default function AppointmentsPage() {
                         Reprogrammer
                       </DropdownMenuItem>
                       <DropdownMenuItem 
-                        onClick={() => handleCancelAppointment(appt.id)}
+                        onClick={() => handleCancelAppointment(appt.id, appt.idCreneau)}
                         className="text-red-600 dark:text-red-400"
                         disabled={appt.status !== 'upcoming'}
                       >
@@ -163,6 +184,10 @@ export default function AppointmentsPage() {
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <Calendar className="w-4 h-4 mr-2" />
                     {formatDate(appt.date)}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                    <Clock className="w-4 h-4 mr-2" />
+                    {appt.creneau}  
                   </div>
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <MapPin className="w-4 h-4 mr-2" />
@@ -189,7 +214,7 @@ export default function AppointmentsPage() {
                         <Button 
                           variant="destructive" 
                           size="sm"
-                          onClick={() => handleCancelAppointment(appt.id)}
+                          onClick={() => handleCancelAppointment(appt.id, appt.idCreneau)}
                         >
                           Annuler
                         </Button>
