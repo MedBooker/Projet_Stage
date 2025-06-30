@@ -18,10 +18,13 @@ export default function MedecinDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
-  const [appointments] = useState([
-    { id: 1, patient: 'Jean Louis', time: '09:00 - 10:00' },
-    { id: 2, patient: 'Awa Sow', time: '11:00 - 12:00' }
-  ]);
+  type Appointment = { id: string; patient: string; creneau: string; date: string; idCreneau: string; status: string; };
+  const [filteredAppointments, setFilteredAppointments] = useState<any>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  // const [appointments] = useState([
+  //   { id: 1, patient: 'Jean Louis', time: '09:00 - 10:00' },
+  //   { id: 2, patient: 'Awa Sow', time: '11:00 - 12:00' }
+  // ]);
 
   useEffect(() => {
     setToken(sessionStorage.getItem('auth_token'));
@@ -49,6 +52,37 @@ export default function MedecinDashboard() {
       getInfos();
     }
   }, [token]);
+
+  useEffect(() => {
+    const getAppointments = async () => {
+      const response = await fetch('http://127.0.0.1:8000/api/Medecins/get-appointments', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      });
+      const data = await response.json();
+      console.log ('test',data);
+      const fakeAppointments = data.map((appt: any) => ({
+        id: appt.id, 
+        patient: appt.prenomNom,
+        creneau: appt.creneau,
+        date: appt.date,
+        idCreneau: appt.idCreneau,
+        status: appt.status || 'dispo'  
+      }));
+      setAppointments(fakeAppointments);
+      };
+      if (token)
+        getAppointments();
+  }, [token]);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]; 
+    const filtered = appointments.filter(appointment => appointment.date === today);
+    setFilteredAppointments(filtered);
+  }, [appointments]);
 
   return (
     <div className="space-y-6 p-4">
@@ -100,10 +134,10 @@ export default function MedecinDashboard() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {appointments.map((rdv) => (
+              {filteredAppointments.map((rdv: any) => (
                 <li key={rdv.id} className="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded">
                   <span>{rdv.patient}</span>
-                  <span className="text-sm text-muted-foreground">{rdv.time}</span>
+                  <span className="text-sm text-muted-foreground">{rdv.creneau}</span>
                 </li>
               ))}
             </ul>
