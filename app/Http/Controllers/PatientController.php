@@ -199,7 +199,7 @@ class PatientController extends Controller
         }
         return response()->json([
             'message' => 'Le nombre limite de patients pour ce créneau n\'a pas encore été atteint'
-        ], 400);
+        ], 200);
     }
 
     public function createAppointment(Request $request){
@@ -227,6 +227,7 @@ class PatientController extends Controller
             'creneau' => $validated['appointmentInfo']['time'],
             'idCreneau' => $validated['appointmentInfo']['creneauId'],
             'raison' => $validated['reason'],
+            'statut' => 'upcoming',
             'idPatient' => $patient->_id
         ]);
         return response()->json([
@@ -235,4 +236,34 @@ class PatientController extends Controller
         ],200);
     }
 
+    public function getAppointments(Request $request) {
+        $patient = $request->user('patient');
+        $appointments = RendezVous::where('idPatient', $patient->_id)->get();
+        return response()->json($appointments, 200);
+    }
+
+    public function deleteAppointments(Request $request) {
+        $request->validate([
+            'id' => 'required',
+            'idCreneau' => 'required'
+        ]);
+        $appointment = RendezVous::where('_id', $request->id)->first();
+        $appointment->delete();
+        $nbrePatients = RendezVous::where('idCreneau', $request->idCreneau)->count();
+        $creneau = CreneauHoraire::where('jours.idCreneau', $request->idCreneau)->first();
+        foreach ($creneau->jours as $index => $horaire) {
+            if ($horaire['idCreneau'] == $request->idCreneau) {
+                if ($nbrePatients < $horaire['nbreLimitePatient'] && !$horaire['est_disponible']) {
+                    $jours = $creneau->jours;
+                    $jours[$index]['est_disponible'] = true;
+                    $creneau->update([
+                        'jours' => $jours
+                    ]);
+                }
+            }
+        }
+        return response()->json([
+            'message' => 'Rendez-vous supprimé avec succès'
+        ], 200);
+    }
 }

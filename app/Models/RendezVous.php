@@ -19,6 +19,7 @@ class RendezVous extends Model
         'date',
         'creneau',
         'raison',
+        'statut',
         'idPatient',
         'idCreneau'
     ];

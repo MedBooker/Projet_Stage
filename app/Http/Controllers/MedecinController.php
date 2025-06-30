@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use App\Models\Medecin;
+use App\Models\RendezVous;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
 use Illuminate\Support\Facades\Hash;
@@ -116,5 +117,11 @@ class MedecinController extends Controller
             'message' => count($creneauxFormates) . ' créneau(x) groupés ajoutés',
             'data' => $groupeCreneaux
         ], 201);
+    }
+
+    public function getAppointments (Request $request) {
+        $medecin = $request->user('medecin');
+        $appointments = RendezVous::where('medecin', 'Dr. Dupont')->get();
+        return response()->json($appointments, 200);
     }
 }

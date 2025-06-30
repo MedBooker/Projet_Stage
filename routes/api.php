@@ -18,6 +18,8 @@ Route::prefix('Patients')->group(function () {
         Route::get('get-doctors', [PatientController::class, 'getDoctors']);
         Route::post('patient-limit', [PatientController::class, 'patientLimit']);
         Route::post('create-appointment', [PatientController::class, 'createAppointment']);
+        Route::get('get-appointments', [PatientController::class, 'getAppointments']);
+        Route::delete('delete-appointments', [PatientController::class, 'deleteAppointments']);
     });
 });
 
@@ -30,5 +32,6 @@ Route::prefix('Medecins')->group(function () {
     Route::middleware('auth:medecin')->group(function () {
         Route::get('profile', [MedecinController::class, 'profile']);
         Route::post('add-schedule', [MedecinController::class, 'addSchedule']);
+        Route::get('get-appointments', [MedecinController::class, 'getAppointments']);
     });
 });
