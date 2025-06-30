@@ -31,6 +31,7 @@ export default function AppointmentsPage() {
         idCreneau: appt.idCreneau,
         status: appt.status || 'dispo'  
       }));
+      fakeAppointments.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
       setAppointments(fakeAppointments);
       };
       if (token)
