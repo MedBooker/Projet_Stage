@@ -31,28 +31,16 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
       current: pathname.startsWith("/dashboard/patient/medical-records"),
     },
     {
-      name: "Traitements",
-      href: "/dashboard/patient/treatments",
-      icon: Pill,
-      current: pathname.startsWith("/dashboard/patient/treatments"),
-    },
-    {
-      name: "Messages",
-      href: "/dashboard/patient/messages",
+      name: "Notifications",
+      href: "/dashboard/patient/notifications",
       icon: MessageSquare,
-      current: pathname.startsWith("/dashboard/patient/messages"),
+      current: pathname.startsWith("/dashboard/patient/notifications"),
     },
     {
       name: "Mon Profil",
       href: "/dashboard/patient/profile",
       icon: User,
       current: pathname.startsWith("/dashboard/patient/profile"),
-    },
-    {
-      name: "Paramètres",
-      href: "/dashboard/patient/settings",
-      icon: Settings,
-      current: pathname.startsWith("/dashboard/patient/settings"),
     },
   ];
 
