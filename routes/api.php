@@ -11,6 +11,9 @@ Route::prefix('Patients')->group(function () {
     Route::post('register-request', [PatientController::class, 'registerRequest']);
     Route::post('/verify-email/{token}', [PatientController::class, 'verifyEmail']);
     Route::post('login', [PatientController::class, 'login']);
+    Route::middleware('auth:admin')->group(function () {
+        Route::get('/', [PatientController::class, 'index']); // GET /api/patients
+    });
 
     Route::middleware('auth:patient')->group(function () {
         Route::get('profile', [PatientController::class, 'profile']);
@@ -28,7 +31,11 @@ Route::prefix('Patients')->group(function () {
 Route::prefix('Medecins')->group(function () {
     Route::post('register', [MedecinController::class, 'register']);
     Route::post('login', [MedecinController::class, 'login']);
-    
+        Route::middleware('auth:admin')->group(function () {
+        Route::get('/', [MedecinController::class, 'index']);
+        Route::post('/{id}/toggle-status', [MedecinController::class, 'toggleStatus']);
+    });
+
 
     Route::middleware('auth:medecin')->group(function () {
         Route::get('profile', [MedecinController::class, 'profile']);
@@ -41,9 +48,9 @@ Route::prefix('Medecins')->group(function () {
 Route::prefix('Admin')->group(function () {
     Route::post('register', [AdminController::class, 'register']);
     Route::post('login', [AdminController::class, 'login']);
-    
+    Route::get('stats', [AdminController::class, 'getStats']);
+
     Route::middleware('auth:admin')->group(function () {
         Route::post('register-doctor', [AdminController::class, 'registerDoctor']);
     });
 });
-

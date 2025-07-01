@@ -163,10 +163,10 @@ class PatientController extends Controller
             $horairesParJour = [];
             foreach ($medecin->creneaux as $creneau) {
                 foreach ($creneau->jours as $horaire) {
-                    if ($horaire['est_disponible']) { 
-                        $jour = $horaire['jour']; 
+                    if ($horaire['est_disponible']) {
+                        $jour = $horaire['jour'];
                         $horairesParJour[$jour][] = [
-                            'idCreneau' => $horaire['idCreneau'], 
+                            'idCreneau' => $horaire['idCreneau'],
                             'heure' => $horaire['heureDebut'] . ' - ' . $horaire['heureFin']
                         ];
                     }
@@ -265,5 +265,27 @@ class PatientController extends Controller
         return response()->json([
             'message' => 'Rendez-vous supprimé avec succès'
         ], 200);
+    }
+
+        public function index(Request $request)
+    {
+        if (!$request->user()) {
+            return response()->json(['message' => 'Non autorisé'], 401);
+        }
+
+        $patients = Patient::all([
+            '_id',
+            'prenom',
+            'nom',
+            'adresseMail',
+            'numeroDeTelephone',
+            'adresse',
+            'dateDeNaissance',
+            'sexe',
+            'assurance',
+            'createdAt'
+        ]);
+
+        return response()->json($patients);
     }
 }

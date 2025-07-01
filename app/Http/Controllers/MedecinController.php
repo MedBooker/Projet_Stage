@@ -22,7 +22,7 @@ class MedecinController extends Controller
         ]);
         $medecin = Medecin::create([
             'adresseMail' => $validated['adresseMail'],
-            'motDePasse' => bcrypt($validated['motDePasse']), 
+            'motDePasse' => bcrypt($validated['motDePasse']),
             'prenom' => $validated['prenom'],
             'nom' => $validated['nom'],
             'specialite' => $validated['specialite'],
@@ -102,7 +102,7 @@ class MedecinController extends Controller
 
             if ($conflict) {
                 return response()->json([
-                    'message' => 'Conflit détecté pour le créneau : ' . $creneau['jour'] . ' ' . 
+                    'message' => 'Conflit détecté pour le créneau : ' . $creneau['jour'] . ' ' .
                              $creneau['heureDebut'] . '-' . $creneau['heureFin']
                 ], 409);
             }
@@ -119,9 +119,26 @@ class MedecinController extends Controller
         ], 201);
     }
 
-    public function getAppointments (Request $request) {
+    public function getAppointments(Request $request)
+    {
         $medecin = $request->user('medecin');
-        $appointments = RendezVous::where('medecin', 'Dr. Dupont')->get();
-        return response()->json($appointments, 200);
+
+        $rendezVous = RendezVous::where('idMedecin', $medecin->_id)
+            ->with('patient')
+            ->get();
+
+        return response()->json($rendezVous, 200);
+    }
+
+    public function toggleStatus(Request $request, $id)
+    {
+        $medecin = Medecin::findOrFail($id);
+        $medecin->statut = $medecin->statut === 'actif' ? 'inactif' : 'actif';
+        $medecin->save();
+
+        return response()->json([
+            'message' => 'Statut mis à jour',
+            'new_status' => $medecin->statut
+        ]);
     }
 }
