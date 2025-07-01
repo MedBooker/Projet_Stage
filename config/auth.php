@@ -47,7 +47,11 @@ return [
         'medecin' => [
             'driver' => 'sanctum',
             'provider' => 'medecins',
-    ],
+        ],
+        'admin' => [
+            'driver' => 'sanctum',
+            'provider' => 'admins',
+        ]
     ],
 
     /*
@@ -79,6 +83,10 @@ return [
         'medecins' => [
             'driver' => 'eloquent',
             'model' => App\Models\Medecin::class,
+        ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
         ],
 
         // 'users' => [

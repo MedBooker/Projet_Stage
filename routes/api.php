@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\MedecinController;
-use App\Http\Controllers\PatientController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MedecinController;
+use App\Http\Controllers\PatientController;
 
 // Route pour les patients
 Route::prefix('Patients')->group(function () {
@@ -35,3 +36,14 @@ Route::prefix('Medecins')->group(function () {
         Route::get('get-appointments', [MedecinController::class, 'getAppointments']);
     });
 });
+
+//Route pour l'Admin
+Route::prefix('Admin')->group(function () {
+    Route::post('register', [AdminController::class, 'register']);
+    Route::post('login', [AdminController::class, 'login']);
+    
+    Route::middleware('auth:admin')->group(function () {
+        Route::post('register-doctor', [AdminController::class, 'registerDoctor']);
+    });
+});
+
