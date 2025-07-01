@@ -119,16 +119,16 @@ class MedecinController extends Controller
         ], 201);
     }
 
-    public function getAppointments(Request $request)
-    {
-        $medecin = $request->user('medecin');
+public function getAppointments(Request $request)
+{
+    $medecin = $request->user('medecin');
 
-        $rendezVous = RendezVous::where('idMedecin', $medecin->_id)
-            ->with('patient')
-            ->get();
+    // Récupère tous les créneaux horaires du médecin
+    $creneaux = CreneauHoraire::where('idMedecin', $medecin->_id)
+        ->get(['_id', 'idMedecin', 'jours']);
 
-        return response()->json($rendezVous, 200);
-    }
+    return response()->json($creneaux, 200);
+}
 
     public function toggleStatus(Request $request, $id)
     {
