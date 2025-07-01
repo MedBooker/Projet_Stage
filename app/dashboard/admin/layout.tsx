@@ -9,13 +9,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { label: 'Tableau de bord', href: '/dashboard/admin' },
-    { label: 'Patients en attente', href: '/dashboard/admin/patients' },
-    { label: 'Gérer les utilisateurs', href: '/dashboard/admin/users' },
-    { label: 'Sessions actives', href: '/dashboard/admin/sessions' }
+    { label: 'Patients', href: '/dashboard/admin/patients' },
+    { label: 'Gérer les médecins', href: '/dashboard/admin/users' },
   ];
 
   return (
-    // <ProtectedLayout>
+    <ProtectedLayout>
       <div className="min-h-screen bg-emerald-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
         <div className="flex flex-col md:flex-row">
           <aside className="w-full md:w-64 p-6 bg-white dark:bg-gray-800 shadow-md rounded-lg m-4 md:m-6">
@@ -36,6 +35,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <main className="flex-1 p-6">{children}</main>
         </div>
       </div>
-    //  {/* </ProtectedLayout> */}
+      </ProtectedLayout>
   );
 }
