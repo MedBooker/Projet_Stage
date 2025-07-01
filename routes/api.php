@@ -41,6 +41,7 @@ Route::prefix('Medecins')->group(function () {
         Route::get('profile', [MedecinController::class, 'profile']);
         Route::post('add-schedule', [MedecinController::class, 'addSchedule']);
         Route::get('get-appointments', [MedecinController::class, 'getAppointments']);
+        Route::get('get-schedule', [MedecinController::class, 'getSchedule']);
     });
 });
 

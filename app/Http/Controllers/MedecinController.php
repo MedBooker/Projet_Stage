@@ -123,7 +123,16 @@ public function getAppointments(Request $request)
 {
     $medecin = $request->user('medecin');
 
-    // Récupère tous les créneaux horaires du médecin
+    $rendezVous = RendezVous::where('idMedecin', $medecin->_id)
+        ->with('patient')
+        ->get();
+
+    return response()->json($rendezVous, 200);
+}
+public function getSchedule(Request $request)
+{
+    $medecin = $request->user('medecin');
+
     $creneaux = CreneauHoraire::where('idMedecin', $medecin->_id)
         ->get(['_id', 'idMedecin', 'jours']);
 
