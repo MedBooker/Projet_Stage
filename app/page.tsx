@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   if (isAuthenticated) {
-    router.push('/dashboard/medecin');
+    router.push('/dashboard/admin');
     return null;
   }
 
