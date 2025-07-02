@@ -38,9 +38,9 @@ export default function AppointmentsPage() {
 
         const formattedAppointments = data.map((appt: any) => ({
           id: appt._id || appt.id,
-          patient: appt.patient?.prenom + ' ' + appt.patient?.nom || 'Patient inconnu',
-          creneau: appt.heureDebut + ' - ' + appt.heureFin,
-          date: appt.dateRendezVous || appt.date,
+          patient: appt.prenomNom,
+          creneau: appt.creneau,
+          date: appt.date,
           idCreneau: appt.idCreneau,
           status: appt.statut || 'confirmé'
         }));
