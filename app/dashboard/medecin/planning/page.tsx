@@ -35,12 +35,12 @@ export default function PlanningPage() {
   const [groupesCreneaux, setGroupesCreneaux] = useState<CreneauGroupe[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [newCreneau, setNewCreneau] = useState({
+  const [newCreneaux, setNewCreneaux] = useState([{
     jour: '',
     heureDebut: '',
     heureFin: '',
     nbreLimitePatient: 5
-  });
+  }]);
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -79,6 +79,13 @@ const fetchCreneaux = async (authToken: string) => {
   }
 };
 
+  const handleAddCreneau = () => {
+    setNewCreneaux([
+      ...newCreneaux,
+      { jour: '', heureDebut: '', heureFin: '', nbreLimitePatient: 5 }
+    ]);
+  };
+
   const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
@@ -89,16 +96,17 @@ const fetchCreneaux = async (authToken: string) => {
       return;
     }
 
-    if (!newCreneau.jour || !newCreneau.heureDebut || !newCreneau.heureFin) {
-      toast.error("Veuillez remplir tous les champs");
-      setSubmitting(false);
-      return;
-    }
-
-    if (newCreneau.heureDebut >= newCreneau.heureFin) {
-      toast.error("L'heure de fin doit être après l'heure de début");
-      setSubmitting(false);
-      return;
+    for (let creneau of newCreneaux) {
+      if (!creneau.jour || !creneau.heureDebut || !creneau.heureFin) {
+        toast.error("Veuillez remplir tous les champs");
+        setSubmitting(false);
+        return;
+      }
+      if (creneau.heureDebut >= creneau.heureFin) {
+        toast.error("L'heure de fin doit être après l'heure de début");
+        setSubmitting(false);
+        return;
+      }
     }
 
     try {
@@ -109,14 +117,7 @@ const fetchCreneaux = async (authToken: string) => {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          creneaux: [{
-            jour: newCreneau.jour,
-            heureDebut: newCreneau.heureDebut,
-            heureFin: newCreneau.heureFin,
-            nbreLimitePatient: newCreneau.nbreLimitePatient
-          }]
-        })
+        body: JSON.stringify({creneaux: newCreneaux})
       });
 
       const data = await response.json();
@@ -133,12 +134,12 @@ const fetchCreneaux = async (authToken: string) => {
       }
 
       toast.success(data.message || "Créneau ajouté avec succès !");
-      setNewCreneau({
+      setNewCreneaux([{
         jour: '',
         heureDebut: '',
         heureFin: '',
         nbreLimitePatient: 5
-      });
+      }]);
       
       await fetchCreneaux(token!);
     } catch (err) {
@@ -182,7 +183,7 @@ const fetchCreneaux = async (authToken: string) => {
     }
   };
 
-  const joursSemaine = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 const allCreneaux = (groupesCreneaux || []).flatMap(groupe => 
   (groupe?.jours || []).map(creneau => ({
@@ -249,79 +250,88 @@ const allCreneaux = (groupesCreneaux || []).flatMap(groupe =>
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleAdd}>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Jour</label>
-                  <Select 
-                    value={newCreneau.jour}
-                    onValueChange={(value) => setNewCreneau({...newCreneau, jour: value})}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un jour" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {joursSemaine.map((jour) => (
-                        <SelectItem key={jour} value={jour}>
-                          {jour.charAt(0).toUpperCase() + jour.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {newCreneaux.map((creneau, index) => (
+              <div key={index} className="space-y-4">
+                {/* Sélecteur de jour */}
+                <Select
+                  value={creneau.jour}
+                  onValueChange={(value) => {
+                    const updatedCreneaux = [...newCreneaux];
+                    updatedCreneaux[index].jour = value;
+                    setNewCreneaux(updatedCreneaux);
+                  }}
+                >
+                  <SelectTrigger className="my-3 mx-3">
+                    <SelectValue placeholder="Sélectionnez un jour" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {joursSemaine.map((jour) => (
+                      <SelectItem key={jour} value={jour}>
+                        {jour.charAt(0).toUpperCase() + jour.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Heure début */}
+                <div className="my-3 mx-5">
+                <label className="block text-sm font-medium mb-1">Heure début</label>
+                <Input
+                  type="time"
+                  value={creneau.heureDebut}
+                  onChange={(e) => {
+                    const updatedCreneaux = [...newCreneaux];
+                    updatedCreneaux[index].heureDebut = e.target.value;
+                    setNewCreneaux(updatedCreneaux);
+                  }}
+                />
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Heure début</label>
-                    <Input
-                      type="time"
-                      value={newCreneau.heureDebut}
-                      onChange={(e) => setNewCreneau({...newCreneau, heureDebut: e.target.value})}
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Heure fin</label>
-                    <Input
-                      type="time"
-                      value={newCreneau.heureFin}
-                      onChange={(e) => setNewCreneau({...newCreneau, heureFin: e.target.value})}
-                      required
-                    />
-                  </div>
+
+                {/* Heure fin */}
+                <div className="my-3 mx-5">
+                <label className="block text-sm font-medium mb-1">Heure fin</label>
+                <Input
+                  type="time"
+                  value={creneau.heureFin}
+                  onChange={(e) => {
+                    const updatedCreneaux = [...newCreneaux];
+                    updatedCreneaux[index].heureFin = e.target.value;
+                    setNewCreneaux(updatedCreneaux);
+                  }}
+                />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nombre max de patients</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={newCreneau.nbreLimitePatient}
-                    onChange={(e) => setNewCreneau({
-                      ...newCreneau, 
-                      nbreLimitePatient: parseInt(e.target.value) || 1
-                    })}
-                    required
-                  />
+
+                {/* Nombre limite de patients */}
+                <div className="my-3 mx-5">
+                <label className="block text-sm font-medium mb-1">Nombre max de patients</label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={creneau.nbreLimitePatient}
+                  onChange={(e) => {
+                    const updatedCreneaux = [...newCreneaux];
+                    updatedCreneaux[index].nbreLimitePatient = parseInt(e.target.value, 10);
+                    setNewCreneaux(updatedCreneaux);
+                  }}
+                />
                 </div>
               </div>
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button 
-                type="submit" 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    En cours...
-                  </>
-                ) : 'Ajouter Créneau'}
-              </Button>
-            </CardFooter>
+            ))}
+
+            {/* Ajouter un autre créneau */}
+            <Button type="button" onClick={handleAddCreneau} className="mx-3">
+              Ajouter un autre créneau
+            </Button>
+
+            {/* Soumettre les créneaux */}
+            <Button type="submit" disabled={submitting} className="mx-5">
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  En cours...
+                </>
+              ) : 'Ajouter les créneaux'}
+            </Button> 
           </form>
         </Card>
 
