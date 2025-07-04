@@ -56,7 +56,7 @@ export default function AppointmentsPage() {
         creneau: appt.creneau,
         idCreneau: appt.idCreneau,
         specialty: appt.specialite,
-        status: appt.status || 'upcoming',
+        status: appt.statut,
         location: 'Clinique de l\'Amitié, Dakar',
         notes: 'Prévoir un examen clinique complet',
       }));
@@ -249,7 +249,7 @@ export default function AppointmentsPage() {
               Vous n'avez aucun rendez-vous à venir. Prenez rendez-vous avec un professionnel de santé.
             </p>
             <Button asChild>
-              <Link href="/appointments/new" className="flex items-center gap-2">
+              <Link href="/dashboard/patient/appointments/new" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Prendre rendez-vous
               </Link>

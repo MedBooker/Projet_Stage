@@ -20,7 +20,7 @@ const formSchema = z.object({
     phone: z.string().min(10, "Le numéro doit contenir au moins 10 chiffres").optional(),
   }),
   appointmentInfo: z.object({
-    consultationType: z.string().min(1, "Veuillez sélectionner un type de consultation"),
+    consultationType: z.string().min(1, "Veuillez sélectionner un type de rendez-vous"),
     specialty: z.string().min(1, "Veuillez sélectionner une spécialité"),
     doctor: z.string().min(1, "Veuillez sélectionner un médecin"),
     date: z.string().min(1, "Veuillez sélectionner une date"),
@@ -193,7 +193,6 @@ export default function NewAppointmentPage() {
       if (selectedDoctor.availability.includes(normalizedDayName)) {
         const creneauxDuJour = selectedDoctor.horaires?.[normalizedDayName] || [];
         const horaires = creneauxDuJour.map((creneau: { heure: string }) => creneau.heure);
-        // const ids = creneauxDuJour.map((creneau: { idCreneau: string }) => creneau.idCreneau);
 
         setAvailableTimes(horaires);
         // setCreneauId(ids.length > 0 ? ids[0] : null);
@@ -414,7 +413,7 @@ export default function NewAppointmentPage() {
                   </Label>
                   <Select onValueChange={(value) => setValue('appointmentInfo.consultationType', value)} value={watch('appointmentInfo.consultationType')}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un type de consultation" />
+                      <SelectValue placeholder="Sélectionner un type de rendez-vous" />
                     </SelectTrigger>
                     <SelectContent>
                       {consultationTypes.map((type) => (

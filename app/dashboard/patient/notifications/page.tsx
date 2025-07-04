@@ -67,7 +67,7 @@ export default function NotificationsPage() {
         throw new Error('Non authentifié');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/notifications', {
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/notifications', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -78,11 +78,11 @@ export default function NotificationsPage() {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
-      const data: ApiResponse[] = await response.json();
-      const transformedData = data.map(transformNotification);
+      const data = await response.json();
+      const transformedData = data.notifications.map(transformNotification);
       
       setNotifications(transformedData);
-      setUnreadCount(transformedData.filter(n => !n.isRead).length);
+      setUnreadCount(transformedData.filter((n: any) => !n.isRead).length);
     } catch (error) {
       console.error('Erreur:', error);
       toast.error('Échec du chargement des notifications');
