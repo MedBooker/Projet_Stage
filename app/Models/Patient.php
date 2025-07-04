@@ -20,6 +20,7 @@ class Patient extends Authenticatable
         'dateDeNaissance',
         'numeroDeTelephone',
         'adresse',
-        'assurance'
+        'assurance',
+        'statut',
     ];
 }

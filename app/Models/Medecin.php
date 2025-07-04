@@ -17,7 +17,8 @@ class Medecin extends Authenticatable
         'motDePasse',
         'prenom',
         'nom',
-        'specialite'
+        'specialite',
+        'statut'
     ];
 
     public function creneaux() {

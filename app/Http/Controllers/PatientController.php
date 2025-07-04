@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use DateTime;
 use Carbon\Carbon;
 use App\Models\Medecin;
 use App\Models\Patient;
 use App\Mail\ConfirmMail;
-use App\Models\CreneauHoraire;
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
+use App\Models\CreneauHoraire;
 use App\Models\PendingPatient;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -71,6 +72,7 @@ class PatientController extends Controller
             'dateDeNaissance' => $pendingPatient->dateDeNaissance,
             'numeroDeTelephone' => $pendingPatient->numeroDeTelephone,
             'adresse' => $pendingPatient->adresse,
+            'statut' => 'actif'
         ];
         if ($pendingPatient->assurance !== 'Aucune') {
             $data['assurance'] = $pendingPatient->assurance;
@@ -91,6 +93,12 @@ class PatientController extends Controller
         ]);
 
         $patient = Patient::where('adresseMail', $request->email)->first();
+
+        if ($patient->statut == 'inactif') {
+            return response()->json([
+                'message' => 'Votre compte a ete desactiver'
+            ], 400);
+        }
 
         if (!$patient || !Hash::check($request->password, $patient->motDePasse)) {
             return response()->json([
@@ -267,25 +275,28 @@ class PatientController extends Controller
         ], 200);
     }
 
-        public function index(Request $request)
-    {
-        if (!$request->user()) {
-            return response()->json(['message' => 'Non autorisé'], 401);
-        }
+    public function notifications(Request $request) {
+        setlocale(LC_TIME, 'fr_FR.UTF-8'); 
+        $patient =$request->user('patient');
+        $rdvAnnules = RendezVous::where('idPatient', $patient->_id)
+                                 ->where('statut', 'cancelled')
+                                 ->get();
 
-        $patients = Patient::all([
-            '_id',
-            'prenom',
-            'nom',
-            'adresseMail',
-            'numeroDeTelephone',
-            'adresse',
-            'dateDeNaissance',
-            'sexe',
-            'assurance',
-            'createdAt'
-        ]);
-
-        return response()->json($patients);
+        return response()->json([
+            'notifications' => $rdvAnnules->map(function ($rdv) {
+                $date = new DateTime($rdv->date);
+                $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
+                $formattedDate = $formatter->format($date); 
+                return [
+                    'id' => $rdv->_id,
+                    'title' => 'Rendez-vous annulé',
+                    'type' => 'appointment',
+                    'isRead' => false,
+                    'message' => "Le " . $rdv->medecin . " a annulé votre rendez-vous prévu le " . $formattedDate . " au créneau " . $rdv->creneau . ".",
+                    'relatedId' => $rdv->_id,
+                    'createdAt' => now(),
+                ];
+            })
+        ], 200);
     }
 }

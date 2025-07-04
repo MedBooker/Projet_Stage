@@ -40,6 +40,12 @@ class MedecinController extends Controller
 
         $medecin = Medecin::where('adresseMail', $request->email)->first();
 
+         if ($medecin->statut == 'inactif') {
+            return response()->json([
+                'message' => 'Votre compte a été désactivé. Veuillez contacter l\'administrateur afin de le réactiver.'
+            ], 400);
+        }
+
         if (!$medecin || !Hash::check($request->password, $medecin->motDePasse)) {
             return response()->json([
                 'message' => 'Identifiants invalides'
@@ -119,35 +125,17 @@ class MedecinController extends Controller
         ], 201);
     }
 
-public function getAppointments(Request $request)
-{
-    $medecin = $request->user('medecin');
+    public function getAppointments(Request $request){
+        $medecin = $request->user('medecin');
+        $rendezVous = RendezVous::where('medecin', 'Dr. ' . $medecin->prenom . ' ' . $medecin->nom)->get();
+        return response()->json($rendezVous, 200);
+    }
 
-    $rendezVous = RendezVous::where('idMedecin', $medecin->_id)
-        ->with('patient')
-        ->get();
+    public function getSchedule(Request $request){
+        $medecin = $request->user('medecin');
+        $creneaux = CreneauHoraire::where('idMedecin', $medecin->_id)
+                                   ->get(['_id', 'idMedecin', 'jours']);
 
-    return response()->json($rendezVous, 200);
-}
-public function getSchedule(Request $request)
-{
-    $medecin = $request->user('medecin');
-
-    $creneaux = CreneauHoraire::where('idMedecin', $medecin->_id)
-        ->get(['_id', 'idMedecin', 'jours']);
-
-    return response()->json($creneaux, 200);
-}
-
-    public function toggleStatus(Request $request, $id)
-    {
-        $medecin = Medecin::findOrFail($id);
-        $medecin->statut = $medecin->statut === 'actif' ? 'inactif' : 'actif';
-        $medecin->save();
-
-        return response()->json([
-            'message' => 'Statut mis à jour',
-            'new_status' => $medecin->statut
-        ]);
+        return response()->json($creneaux, 200);
     }
 }

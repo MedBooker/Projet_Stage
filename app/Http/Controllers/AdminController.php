@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Admin;
 use App\Models\Medecin;
+use App\Models\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -69,11 +70,54 @@ class AdminController extends Controller
             'prenom' => $request->prenom,
             'nom' => $request->nom,
             'specialite' => $request->specialite,
+            'statut' => 'actif'
         ]);
         return response()->json([
             'message' => 'Medecin enregistré avec succès',
             'patient' => $medecin
         ]);
+    }
+
+    public function getMedecins(Request $request) {
+        $admin = $request->user('admin');
+            if (!$admin) {
+                return response()->json([
+                    'message' => 'Vous n\'etes pas autorisé à accéder à cette page'
+                ], 401);
+            }
+            $medecins = Medecin::all();
+            return response()->json($medecins);
+    }
+
+     public function toggleStatus(Request $request){
+        $request->validate([
+            'id' => 'required|string'
+        ]);
+        $admin = $request->user('admin');
+        if (!$admin) {
+            return response()->json([
+                'message' => 'Vous n\'etes pas autorisé à accéder à cette page'
+            ], 401);
+        }
+        $medecin = Medecin::findOrFail($request->id);
+        $medecin->statut = $medecin->statut === 'actif' ? 'inactif' : 'actif';
+        $medecin->save();
+
+        return response()->json([
+            'message' => 'Statut mis à jour',
+            'new_status' => $medecin->statut
+        ], 200);
+    }
+
+    public function getPatients(Request $request) {
+        $admin = $request->user('admin');
+        if (!$admin) {
+            return response()->json([
+                'message' => 'Vous n\'etes pas autorisé à accéder à cette page'
+            ], 401);
+        }
+        $patients = Patient::all();
+        return response()->json($patients);
     }
 
 }
