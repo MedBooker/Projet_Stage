@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 interface Medecin {
-  _id: string;
+  id: string;
   prenom: string;
   nom: string;
   adresseMail: string;
@@ -22,7 +22,7 @@ export default function UsersPage() {
     const fetchMedecins = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
-        const response = await fetch('http://127.0.0.1:8000/api/Medecins', {
+        const response = await fetch('http://127.0.0.1:8000/api/Admin/get-medecins', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -30,7 +30,6 @@ export default function UsersPage() {
         });
         
         if (!response.ok) throw new Error('Erreur de chargement');
-        
         const data = await response.json();
         setMedecins(data);
       } catch (error) {
@@ -48,12 +47,15 @@ export default function UsersPage() {
   const toggleStatus = async (id: string) => {
     try {
       const token = sessionStorage.getItem('auth_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/${id}/toggle-status`, {
+      console.log('test', id);
+      const response = await fetch(`http://127.0.0.1:8000/api/Admin/toggle-status`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ id })
       });
       
       if (!response.ok) throw new Error('Échec de la mise à jour');
@@ -61,7 +63,7 @@ export default function UsersPage() {
       const result = await response.json();
       
       setMedecins(medecins.map(medecin => 
-        medecin._id === id ? {...medecin, statut: result.new_status} : medecin
+        medecin.id === id ? {...medecin, statut: result.new_status} : medecin
       ));
       
       toast.success("Statut mis à jour");
@@ -94,7 +96,7 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {medecins.map((medecin) => (
-                <tr key={medecin._id} className="text-sm">
+                <tr key={medecin.id} className="text-sm">
                   <td className="py-3">Dr. {medecin.prenom} {medecin.nom}</td>
                   <td>{medecin.specialite}</td>
                   <td>{medecin.adresseMail}</td>
@@ -109,7 +111,7 @@ export default function UsersPage() {
                   </td>
                   <td>
                     <button 
-                      onClick={() => toggleStatus(medecin._id)}
+                      onClick={() => toggleStatus(medecin.id)}
                       className={`px-3 py-1 rounded ${
                         medecin.statut === 'actif'
                           ? 'bg-red-500 text-white hover:bg-red-600'

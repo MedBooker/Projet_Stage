@@ -27,10 +27,11 @@ useEffect(() => {
       const token = sessionStorage.getItem('auth_token');
       if (!token) throw new Error('Authentication required');
 
-      const response = await fetch('http://127.0.0.1:8000/api/Patients', {
+      const response = await fetch('http://127.0.0.1:8000/api/Admin/get-patients', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
