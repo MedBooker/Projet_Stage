@@ -8,6 +8,7 @@ use App\Models\Medecin;
 use App\Models\Patient;
 use App\Mail\ConfirmMail;
 use App\Models\RendezVous;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
 use App\Models\PendingPatient;
@@ -270,6 +271,7 @@ class PatientController extends Controller
                 }
             }
         }
+        Notification::where('relatedId', $request->id)->delete();
         return response()->json([
             'message' => 'Rendez-vous supprimé avec succès'
         ], 200);
@@ -282,21 +284,59 @@ class PatientController extends Controller
                                  ->where('statut', 'cancelled')
                                  ->get();
 
-        return response()->json([
-            'notifications' => $rdvAnnules->map(function ($rdv) {
-                $date = new DateTime($rdv->date);
-                $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
-                $formattedDate = $formatter->format($date); 
-                return [
-                    'id' => $rdv->_id,
+        foreach($rdvAnnules as $rdv) {
+            $date = new DateTime($rdv->date);
+            $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
+            $formattedDate = $formatter->format($date);
+            $existingNotification = Notification::where('idPatient', $patient->_id)
+                                                 ->where('relatedId', $rdv->_id)
+                                                 ->first();
+            if(!$existingNotification) { 
+                Notification::create([
+                    'idPatient' => $patient->_id,
                     'title' => 'Rendez-vous annulé',
                     'type' => 'appointment',
                     'isRead' => false,
                     'message' => "Le " . $rdv->medecin . " a annulé votre rendez-vous prévu le " . $formattedDate . " au créneau " . $rdv->creneau . ".",
                     'relatedId' => $rdv->_id,
-                    'createdAt' => now(),
-                ];
-            })
+                ]);
+            }       
+        };
+        $notifications = Notification::where('idPatient', $patient->_id)->get();
+        return response()->json($notifications, 200);   
+    }
+
+    public function markAsRead(Request $request) {
+        $request->validate([
+            'id_notification' => 'required|string'
+        ]);
+        $patient = $request->user('patient');
+        $notification = Notification::where('idPatient', $patient->_id)
+                                     ->where('_id', $request->id_notification)
+                                     ->first();
+        $notification->update([
+            'isRead' => true
+        ]);
+        return response()->json([
+            'message' => 'La notification a été marquée comme lue',
+            'notification' => $notification
+        ], 200);
+    }
+
+     public function markAllRead(Request $request) {
+        $patient = $request->user('patient');
+        $notifications = Notification::where('idPatient', $patient->_id)
+                                     ->where('isRead', false)
+                                     ->get();
+        
+        foreach($notifications as $notification) {
+             $notification->update([
+                'isRead' => true
+            ]);
+        };                         
+        return response()->json([
+            'message' => 'Toutes les notifications ont été marquées comme lues',
+            'notification' => $notifications
         ], 200);
     }
 }

@@ -21,7 +21,9 @@ Route::prefix('Patients')->group(function () {
         Route::post('create-appointment', [PatientController::class, 'createAppointment']);
         Route::get('get-appointments', [PatientController::class, 'getAppointments']);
         Route::delete('delete-appointments', [PatientController::class, 'deleteAppointments']);
-        Route::get('notifications', [PatientController::class, 'Notifications']);
+        Route::post('notifications', [PatientController::class, 'Notifications']);
+        Route::patch('notifications/read', [PatientController::class, 'markAsRead']);
+        Route::patch('notifications/mark-all-read', [PatientController::class, 'markAllRead']);
     });
 });
 
@@ -35,6 +37,7 @@ Route::prefix('Medecins')->group(function () {
         Route::post('add-schedule', [MedecinController::class, 'addSchedule']);
         Route::get('get-appointments', [MedecinController::class, 'getAppointments']);
         Route::get('get-schedule', [MedecinController::class, 'getSchedule']);
+        Route::delete('delete-schedule', [MedecinController::class, 'deleteSchedule']);
     });
 });
 

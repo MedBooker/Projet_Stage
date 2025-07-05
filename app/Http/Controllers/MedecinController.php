@@ -138,4 +138,24 @@ class MedecinController extends Controller
 
         return response()->json($creneaux, 200);
     }
+
+    public function deleteSchedule(Request $request) {
+        $request->validate([
+            'idCreneau' => 'required|string'
+        ]);
+        $medecin = $request->user('medecin');
+        CreneauHoraire::where('jours.idCreneau', $request->idCreneau)
+                       ->where('idMedecin', $medecin->_id)
+                       ->update([
+                            '$pull' => [
+                                'jours' => ['idCreneau' => $request->idCreneau]
+                            ]
+                        ]);
+        RendezVous::where('idCreneau', $request->idCreneau)->update([
+            'statut' => 'cancelled'
+        ]);
+        return response()->json([
+            'message' => 'Le créneau horaire a été supprimé avec succès.'
+        ], 200);
+    }
 }
