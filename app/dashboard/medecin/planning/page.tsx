@@ -168,7 +168,7 @@ const fetchCreneaux = async (authToken: string) => {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idCreneau: creneauId })
+        body: JSON.stringify({ idCreneau: creneauId, id: groupeId })
       });
 
       if (!response.ok) {
