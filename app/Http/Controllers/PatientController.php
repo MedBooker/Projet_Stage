@@ -260,18 +260,20 @@ class PatientController extends Controller
         $appointment->delete();
         $nbrePatients = RendezVous::where('idCreneau', $request->idCreneau)->count();
         $creneau = CreneauHoraire::where('jours.idCreneau', $request->idCreneau)->first();
-        foreach ($creneau->jours as $index => $horaire) {
-            if ($horaire['idCreneau'] == $request->idCreneau) {
-                if ($nbrePatients < $horaire['nbreLimitePatient'] && !$horaire['est_disponible']) {
-                    $jours = $creneau->jours;
-                    $jours[$index]['est_disponible'] = true;
-                    $creneau->update([
-                        'jours' => $jours
-                    ]);
+        if($creneau) {
+            foreach ($creneau->jours as $index => $horaire) {
+                if ($horaire['idCreneau'] == $request->idCreneau) {
+                    if ($nbrePatients < $horaire['nbreLimitePatient'] && !$horaire['est_disponible']) {
+                        $jours = $creneau->jours;
+                        $jours[$index]['est_disponible'] = true;
+                        $creneau->update([
+                            'jours' => $jours
+                        ]);
+                    }
                 }
             }
         }
-        Notification::where('relatedId', $request->id)->delete();
+        Notification::where('relatedId', $request->id)->first()->delete();
         return response()->json([
             'message' => 'Rendez-vous supprimé avec succès'
         ], 200);
