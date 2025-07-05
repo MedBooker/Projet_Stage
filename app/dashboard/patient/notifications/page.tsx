@@ -11,17 +11,17 @@ interface Notification {
   message: string;
   type: 'appointment' | 'alert' | 'system';
   isRead: boolean;
-  createdAt: Date;
+  created_at: Date;
   relatedId?: string;
 }
 
 interface ApiResponse {
-  _id: string;
+  id: string;
   title: string;
   message: string;
   type: string;
   isRead: boolean;
-  createdAt: string;
+  created_at: string;
   relatedId?: string;
 }
 
@@ -49,12 +49,12 @@ export default function NotificationsPage() {
   const router = useRouter();
 
   const transformNotification = (apiData: ApiResponse): Notification => ({
-    id: apiData._id,
+    id: apiData.id,
     title: apiData.title,
     message: apiData.message,
     type: apiData.type as Notification['type'],
     isRead: apiData.isRead,
-    createdAt: new Date(apiData.createdAt),
+    created_at: new Date(apiData.created_at),
     relatedId: apiData.relatedId
   });
 
@@ -68,6 +68,7 @@ export default function NotificationsPage() {
       }
 
       const response = await fetch('http://127.0.0.1:8000/api/Patients/notifications', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -79,7 +80,7 @@ export default function NotificationsPage() {
       }
 
       const data = await response.json();
-      const transformedData = data.notifications.map(transformNotification);
+      const transformedData = data.map(transformNotification);
       
       setNotifications(transformedData);
       setUnreadCount(transformedData.filter((n: any) => !n.isRead).length);
@@ -95,14 +96,14 @@ export default function NotificationsPage() {
     try {
       const token = sessionStorage.getItem('auth_token');
       
-      await fetch(`http://127.0.0.1:8000/api/notifications/${id}/read`, {
+      await fetch(`http://127.0.0.1:8000/api/Patients/notifications/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ id_notification: id })
       });
-
       setNotifications(prev => prev.map(n => 
         n.id === id ? { ...n, isRead: true } : n
       ));
@@ -117,7 +118,7 @@ export default function NotificationsPage() {
     try {
       const token = sessionStorage.getItem('auth_token');
       
-      await fetch('http://127.0.0.1:8000/api/notifications/mark-all-read', {
+      await fetch('http://127.0.0.1:8000/api/Patients/notifications/mark-all-read', {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -147,9 +148,9 @@ export default function NotificationsPage() {
       markAsRead(notification.id);
     }
     
-    if (notification.type === 'appointment' && notification.relatedId) {
-      router.push(`/appointments/${notification.relatedId}`);
-    }
+    // if (notification.type === 'appointment' && notification.relatedId) {
+    //   router.push(`/appointments/${notification.relatedId}`);
+    // }
   };
 
   return (
@@ -210,7 +211,7 @@ export default function NotificationsPage() {
                               {notification.message}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              {new Date(notification.createdAt).toLocaleString('fr-FR')}
+                              {new Date(notification.created_at).toLocaleString('fr-FR')}
                             </p>
                           </div>
                         </div>
@@ -309,7 +310,7 @@ export default function NotificationsPage() {
                       {notification.message}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      {new Date(notification.createdAt).toLocaleString('fr-FR', {
+                      {new Date(notification.created_at).toLocaleString('fr-FR', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
