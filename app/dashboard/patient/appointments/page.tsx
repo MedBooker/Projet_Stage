@@ -173,7 +173,6 @@ export default function AppointmentsPage() {
                       <DropdownMenuItem 
                         onClick={() => handleCancelAppointment(appt.id, appt.idCreneau)}
                         className="text-red-600 dark:text-red-400"
-                        disabled={appt.status !== 'upcoming'}
                       >
                         Annuler
                       </DropdownMenuItem>
