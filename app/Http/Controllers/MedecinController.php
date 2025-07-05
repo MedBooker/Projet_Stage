@@ -153,14 +153,14 @@ class MedecinController extends Controller
                        ->where('idMedecin', $medecin->_id)
                        ->first();
         if ($schedule) {
-            $schedule->update([
-                '$pull' => [
-                    'jours' => ['idCreneau' => $request->idCreneau]
-                ]
-            ]);
-        }  
-        if(count($schedule->jours) <= 0) {
-            $schedule->delete();
+             $schedule->pull(
+                'jours', [
+                    'idCreneau' => $request->idCreneau
+                ]);
+        }
+        $empty = CreneauHoraire::where('_id', $request->id)->first();
+        if(count($empty->jours) <= 0) {
+            $empty->delete();
         }
         $appointmentsToCancel = RendezVous::where('idCreneau', $request->idCreneau)->get();
         foreach ($appointmentsToCancel as $appointmentToCancel) {
