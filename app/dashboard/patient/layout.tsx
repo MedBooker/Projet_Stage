@@ -2,6 +2,7 @@
 import ProtectedLayout from '@/components/auth/ProtectedLayout';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Home, CalendarDays, Folder, Pill, MessageSquare, LogOut, User, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -10,6 +11,8 @@ import { usePathname } from 'next/navigation';
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [token, setToken] = useState<string | null>(null);
 
   const navItems = [
     {
@@ -44,6 +47,37 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     },
   ];
 
+  useEffect(() => {
+    setToken(sessionStorage.getItem('auth_token'));
+  }, []);
+
+  useEffect(() => {
+    const countNotifications = async () => {
+    try {
+      if (!token) {
+        throw new Error('Non authentifié');
+      }
+
+      const response = await fetch('http://127.0.0.1:8000/api/Patients/count-new-notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setUnreadCount(data.unreadCount);
+    } catch (error) {
+      console.error('Erreur:', error);
+    } 
+  };
+    countNotifications();
+  }, [token])
+
   return (
     <ProtectedLayout>
       <div className="min-h-screen bg-gradient-to-b from-gray-50/95 to-emerald-50/95 dark:from-gray-950 dark:to-emerald-950/95">
@@ -68,7 +102,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                       whileHover={{ x: 2 }}
                       whileTap={{ scale: 0.98 }}
                       className={cn(
-                        "flex items-center px-4 py-3 rounded-lg transition-colors",
+                        "flex items-center px-4 py-3 rounded-lg transition-colors relative",
                         item.current 
                           ? "bg-emerald-100/80 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                           : "hover:bg-gray-100/80 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300"
@@ -76,6 +110,11 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                     >
                       <item.icon className="w-5 h-5 mr-3" />
                       <span className="font-medium">{item.name}</span>
+                      {item.name === "Notifications" && unreadCount > 0 && (
+                        <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {unreadCount}
+                        </span>
+                      )}
                     </motion.div>
                   </Link>
                 ))}
