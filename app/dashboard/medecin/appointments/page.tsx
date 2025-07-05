@@ -74,11 +74,11 @@ export default function AppointmentsPage() {
                       </p>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                      rdv.status === 'annulé' 
+                      rdv.status === 'cancelled' 
                         ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
                         : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
                     }`}>
-                      {rdv.status === 'annulé' ? 'Annulé' : 'À venir'}
+                      {rdv.status === 'cancelled' ? 'Annulé' : 'À venir'}
                     </span>
                   </div>
                 </li>

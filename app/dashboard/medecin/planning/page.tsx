@@ -26,7 +26,7 @@ interface Creneau {
 }
 
 interface CreneauGroupe {
-  _id: string;
+  id: string;
   idMedecin: string;
   jours: Creneau[];
 }
@@ -157,16 +157,18 @@ const fetchCreneaux = async (authToken: string) => {
       toast.error("Authentification requise");
       return;
     }
-
+    console.log(groupeId);
     if (!confirm("Voulez-vous vraiment supprimer ce créneau ?")) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/creneaux/${groupeId}/${creneauId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/delete-schedule`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idCreneau: creneauId })
       });
 
       if (!response.ok) {
@@ -188,7 +190,7 @@ const fetchCreneaux = async (authToken: string) => {
 const allCreneaux = (groupesCreneaux || []).flatMap(groupe => 
   (groupe?.jours || []).map(creneau => ({
     ...creneau,
-    groupeId: groupe?._id || ''
+    groupeId: groupe?.id || ''
   }))
 );
 
