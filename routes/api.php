@@ -21,6 +21,7 @@ Route::prefix('Patients')->group(function () {
         Route::post('create-appointment', [PatientController::class, 'createAppointment']);
         Route::get('get-appointments', [PatientController::class, 'getAppointments']);
         Route::delete('delete-appointments', [PatientController::class, 'deleteAppointments']);
+        Route::get('count-new-notifications', [PatientController::class, 'countNotifications']);
         Route::post('notifications', [PatientController::class, 'Notifications']);
         Route::patch('notifications/read', [PatientController::class, 'markAsRead']);
         Route::patch('notifications/mark-all-read', [PatientController::class, 'markAllRead']);

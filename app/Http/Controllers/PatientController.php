@@ -277,31 +277,18 @@ class PatientController extends Controller
         ], 200);
     }
 
-    public function notifications(Request $request) {
-        setlocale(LC_TIME, 'fr_FR.UTF-8'); 
+    public function countNotifications(Request $request) {
         $patient =$request->user('patient');
-        $rdvAnnules = RendezVous::where('idPatient', $patient->_id)
-                                 ->where('statut', 'cancelled')
-                                 ->get();
+        $notifications = Notification::where('idPatient', $patient->_id)
+                                      ->where('isRead', false)
+                                      ->count();
+        return response()->json([
+            'unreadCount' => $notifications, 
+        ], 200);   
+    }
 
-        foreach($rdvAnnules as $rdv) {
-            $date = new DateTime($rdv->date);
-            $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
-            $formattedDate = $formatter->format($date);
-            $existingNotification = Notification::where('idPatient', $patient->_id)
-                                                 ->where('relatedId', $rdv->_id)
-                                                 ->first();
-            if(!$existingNotification) { 
-                Notification::create([
-                    'idPatient' => $patient->_id,
-                    'title' => 'Rendez-vous annulé',
-                    'type' => 'appointment',
-                    'isRead' => false,
-                    'message' => "Le " . $rdv->medecin . " a annulé votre rendez-vous prévu le " . $formattedDate . " au créneau " . $rdv->creneau . ".",
-                    'relatedId' => $rdv->_id,
-                ]);
-            }       
-        };
+    public function notifications(Request $request) {
+        $patient =$request->user('patient');
         $notifications = Notification::where('idPatient', $patient->_id)->get();
         return response()->json($notifications, 200);   
     }

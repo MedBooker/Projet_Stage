@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use DateTime;
 use Carbon\Carbon;
 use App\Models\Medecin;
 use App\Models\RendezVous;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
 use Illuminate\Support\Facades\Hash;
@@ -141,19 +143,49 @@ class MedecinController extends Controller
 
     public function deleteSchedule(Request $request) {
         $request->validate([
-            'idCreneau' => 'required|string'
+            'idCreneau' => 'required|string',
+            'id' => 'required|string'
+
         ]);
         $medecin = $request->user('medecin');
-        CreneauHoraire::where('jours.idCreneau', $request->idCreneau)
+        $schedule = CreneauHoraire::where('_id', $request->id)
+                       ->where('jours.idCreneau', $request->idCreneau)   
                        ->where('idMedecin', $medecin->_id)
-                       ->update([
-                            '$pull' => [
-                                'jours' => ['idCreneau' => $request->idCreneau]
-                            ]
-                        ]);
-        RendezVous::where('idCreneau', $request->idCreneau)->update([
-            'statut' => 'cancelled'
-        ]);
+                       ->first();
+        if ($schedule) {
+            $schedule->update([
+                '$pull' => [
+                    'jours' => ['idCreneau' => $request->idCreneau]
+                ]
+            ]);
+        }  
+        if(count($schedule->jours) <= 0) {
+            $schedule->delete();
+        }
+        $appointmentsToCancel = RendezVous::where('idCreneau', $request->idCreneau)->get();
+        foreach ($appointmentsToCancel as $appointmentToCancel) {
+            $appointmentToCancel->update([
+                'statut' => 'cancelled'
+            ]);
+        }
+        foreach($appointmentsToCancel as $rdv) {
+            $date = new DateTime($rdv->date);
+            $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
+            $formattedDate = $formatter->format($date);
+            $existingNotification = Notification::where('idPatient', $rdv->idPatient)
+                                                 ->where('relatedId', $rdv->_id)
+                                                 ->first();
+            if(!$existingNotification) { 
+                Notification::create([
+                    'idPatient' => $rdv->idPatient,
+                    'title' => 'Rendez-vous annulé',
+                    'type' => 'appointment',
+                    'isRead' => false,
+                    'message' => "Le " . $rdv->medecin . " a annulé votre rendez-vous prévu le " . $formattedDate . " au créneau " . $rdv->creneau . ".",
+                    'relatedId' => $rdv->_id,
+                ]);
+            }       
+        };
         return response()->json([
             'message' => 'Le créneau horaire a été supprimé avec succès.'
         ], 200);
