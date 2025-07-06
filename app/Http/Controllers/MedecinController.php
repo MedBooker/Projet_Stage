@@ -9,6 +9,7 @@ use App\Models\RendezVous;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
+use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
 
 class MedecinController extends Controller
@@ -184,6 +185,10 @@ class MedecinController extends Controller
                     'message' => "Le " . $rdv->medecin . " a annulé votre rendez-vous prévu le " . $formattedDate . " au créneau " . $rdv->creneau . ".",
                     'relatedId' => $rdv->_id,
                 ]);
+                $unreadCount = Notification::where('idPatient', $rdv->idPatient)
+                                            ->where('isRead', false)
+                                            ->count();
+                broadcast(new NotificationSent($rdv->idPatient, $unreadCount));
             }       
         };
         return response()->json([

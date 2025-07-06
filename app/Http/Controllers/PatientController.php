@@ -12,6 +12,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
 use App\Models\PendingPatient;
+use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -281,11 +282,11 @@ class PatientController extends Controller
 
     public function countNotifications(Request $request) {
         $patient =$request->user('patient');
-        $notifications = Notification::where('idPatient', $patient->_id)
+        $unreadCount = Notification::where('idPatient', $patient->_id)
                                       ->where('isRead', false)
                                       ->count();
         return response()->json([
-            'unreadCount' => $notifications, 
+            'unreadCount' => $unreadCount, 
         ], 200);   
     }
 
@@ -306,6 +307,10 @@ class PatientController extends Controller
         $notification->update([
             'isRead' => true
         ]);
+        $unreadCount = Notification::where('idPatient', $patient->_id)
+                                            ->where('isRead', false)
+                                            ->count();
+        broadcast(new NotificationSent($patient->_id, $unreadCount));  
         return response()->json([
             'message' => 'La notification a été marquée comme lue',
             'notification' => $notification
@@ -322,7 +327,8 @@ class PatientController extends Controller
              $notification->update([
                 'isRead' => true
             ]);
-        };                         
+        };
+        broadcast(new NotificationSent($patient->_id, 0));                         
         return response()->json([
             'message' => 'Toutes les notifications ont été marquées comme lues',
             'notification' => $notifications
