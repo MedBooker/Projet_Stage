@@ -7,12 +7,20 @@ import { Home, CalendarDays, Folder, Pill, MessageSquare, LogOut, User, Settings
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import '@/hooks/echo';
+
+declare global {
+  interface Window {
+    Echo?: any;
+  }
+}
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [token, setToken] = useState<string | null>(null);
+  const [patientId, setPatientId] = useState<string | null>(null);
 
   const navItems = [
     {
@@ -49,6 +57,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     setToken(sessionStorage.getItem('auth_token'));
+    setPatientId(sessionStorage.getItem('id'));
   }, []);
 
   useEffect(() => {
@@ -77,6 +86,34 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   };
     countNotifications();
   }, [token])
+
+  useEffect(() => {
+  if (!patientId) {
+    console.log('patientId not loaded yet:', patientId);
+    return;
+  }
+  if (!window.Echo) {
+    console.error('Echo not initialized');
+    return;
+  }
+
+  console.log(`✅ Subscribing to patient.${patientId}`);
+
+  const channel = window.Echo.private(`patient.${patientId}`);
+  
+  
+  channel.listen('.unread_count.updated', (data: { patientId: string; unreadCount: number }) => {
+    console.log('📩 Notification received:', data);
+     if (data.patientId == patientId) {
+    setUnreadCount(data.unreadCount);
+    }
+  });
+   return () => {
+    console.log('🧹 Unsubscribing from channel');
+    channel.stopListening('.unread_count.updated');
+    window.Echo.leave(`patient.${patientId}`);
+  };
+   }, [patientId])
 
   return (
     <ProtectedLayout>
