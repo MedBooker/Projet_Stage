@@ -64,6 +64,7 @@ export default function LoginPage() {
       }
 
       sessionStorage.setItem('auth_token', data.access_token);
+      sessionStorage.setItem('id', data.id);
       sessionStorage.setItem('user', JSON.stringify({
         name: `${data.prenom} ${data.nom}`,
         email: data.email,
