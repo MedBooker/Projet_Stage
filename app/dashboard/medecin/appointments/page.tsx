@@ -55,6 +55,26 @@ export default function AppointmentsPage() {
     if (token) getAppointments();
   }, [token]);
 
+  const completeAppointment = async (id: string) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/complete-appointment/`, {
+        method: 'PATCH',
+        headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        },
+        body: JSON.stringify({ idRdv: id })
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de la mise à jour');
+
+      setAppointments(prev => prev.map(appt => appt.id === id ? { ...appt, status: 'completed' } : appt));
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <Card className="bg-white dark:bg-gray-800">
@@ -80,6 +100,14 @@ export default function AppointmentsPage() {
                     }`}>
                       {rdv.status === 'cancelled' ? 'Annulé' : 'À venir'}
                     </span>
+                    {rdv.status !== 'completed' && rdv.status !== 'cancelled' && ( 
+                      <button
+                        onClick={() => completeAppointment(rdv.id)}
+                        className="ml-4 text-sm text-xs px-2 py-1 rounded bg-emerald-700 click cursor-pointer"
+                      >
+                        Marquer comme effectué
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}
