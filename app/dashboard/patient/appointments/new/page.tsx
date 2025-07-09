@@ -131,29 +131,6 @@ export default function NewAppointmentPage() {
     }
   }, [token]);
 
-  // useEffect(() => {
-  //   if (!token) return;
-
-  //   const patientLimit = async () => {
-  //     try {
-  //       const response = await fetch('http://127.0.0.1:8000/api/Patients/patient-limit', {
-  //         method: 'POST',
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`,
-  //           'Content-Type': 'application/json',
-  //           'Accept': 'application/json',
-  //         },
-  //          body: JSON.stringify({ creneauId }),
-  //       });
-  //       if (!response.ok) throw new Error('Failed to fetch specialities');
-  //     } catch (error) {
-  //       console.error("Error fetching specialities:", error);
-  //     }
-  //   };
-  //   if(creneauId)
-  //     patientLimit();
-  // }, [token, creneauId]);
-
   const handleSpecialtyChange = (value: string) => {
     setSelectedSpecialty(value);
     setValue('appointmentInfo.specialty', value);

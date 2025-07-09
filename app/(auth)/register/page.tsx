@@ -278,7 +278,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="assurance" className="text-sm font-medium text-gray-700 dark:text-gray-300">Assurance maladie</Label>
+              <Label htmlFor="assurance" className="text-sm font-medium text-gray-700 dark:text-gray-300">Prise en charge</Label>
               <div>
                 {isAutreAssurance && formData.assurance !== 'Aucune' ? (
                   <Input
