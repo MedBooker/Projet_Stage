@@ -195,4 +195,19 @@ class MedecinController extends Controller
             'message' => 'Le créneau horaire a été supprimé avec succès.'
         ], 200);
     }
+
+    public function completeAppointment(Request $request) {
+        $request->validate([
+            'idRdv' => 'required|string',
+        ]);
+        $appointment = RendezVous::where('_id', $request->idRdv)->first();
+        if ($appointment) {
+            $appointment->update([
+                'statut' => 'completed'
+            ]);
+        }
+        return response()->json([
+            'message' => 'Rendez-vous marqué comme effectué'
+        ], 200);
+    }
 }

@@ -39,6 +39,7 @@ Route::prefix('Medecins')->group(function () {
         Route::get('get-appointments', [MedecinController::class, 'getAppointments']);
         Route::get('get-schedule', [MedecinController::class, 'getSchedule']);
         Route::delete('delete-schedule', [MedecinController::class, 'deleteSchedule']);
+        Route::patch('complete-appointment', [MedecinController::class, 'completeAppointment']);
     });
 });
 
