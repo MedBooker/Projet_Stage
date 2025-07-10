@@ -1,16 +1,15 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, FileText, Stethoscope, FileSearch, User, ArrowLeft } from 'lucide-react';
+import { Plus, FileText, Stethoscope, FileSearch, User, ArrowLeft, UploadCloud, File, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   patient_id: z.string(),
@@ -19,6 +18,14 @@ const formSchema = z.object({
   prescription: z.string().min(3, 'La prescription doit contenir au moins 3 caractères'),
   notes: z.string().optional(),
 });
+
+type MedicalDocument = {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  uploaded_at: string;
+};
 
 type MedicalRecord = {
   id?: string;
@@ -29,6 +36,7 @@ type MedicalRecord = {
   diagnosis: string;
   prescription: string;
   notes?: string;
+  documents?: MedicalDocument[];
   created_at?: string;
   updated_at?: string;
 };
@@ -39,6 +47,8 @@ export default function DoctorMedicalRecords() {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [token, setToken] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,55 +60,47 @@ export default function DoctorMedicalRecords() {
       notes: '',
     },
   });
-    const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     const authToken = sessionStorage.getItem('auth_token');
     setToken(authToken);
     
     if (authToken) {
-      fetch(authToken);
+      fetchData(authToken);
     } else {
       toast.error("Authentification requise");
       window.location.href = '/login';
     }
   }, []);
 
-  useEffect(() => {
-    const fetchCompletedAppointments = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/Medecins/get-appointments', {
-          headers: {
-            'Authorization': `Bearer ${sessionStorage.getItem('auth_token')}`,
-          },
-        });
-        
-        if (!response.ok) throw new Error('Erreur de chargement');
-        
-        const data = await response.json();
-        const completed = data.filter((app: any) => app.status === 'completed');
-        setCompletedAppointments(completed);
-        
-        const recordsResponse = await fetch('/api/medical-records', {
-          headers: {
-            'Authorization': `Bearer ${sessionStorage.getItem('auth_token')}`,
-          },
-        });
-        
-        if (recordsResponse.ok) {
-          const recordsData = await recordsResponse.json();
-          setRecords(recordsData);
-        }
-      } catch (error) {
-        toast.error('Erreur de chargement des données');
-      } finally {
-        setIsLoading(false);
+  const fetchData = async (token: string) => {
+    try {
+      setIsLoading(true);
+      
+      const appointmentsResponse = await fetch('/api/Medecins/get-appointments', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (!appointmentsResponse.ok) throw new Error('Erreur de chargement des rendez-vous');
+      
+      const appointmentsData = await appointmentsResponse.json();
+      const completed = appointmentsData.filter((app: any) => app.status === 'completed');
+      setCompletedAppointments(completed);
+      
+      const recordsResponse = await fetch('/api/medical-records', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (recordsResponse.ok) {
+        const recordsData = await recordsResponse.json();
+        setRecords(recordsData);
       }
-    };
-
-    fetchCompletedAppointments();
-  }, []);
+    } catch (error) {
+      toast.error('Erreur de chargement des données');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedRecord) {
@@ -109,6 +111,7 @@ export default function DoctorMedicalRecords() {
         prescription: selectedRecord.prescription,
         notes: selectedRecord.notes || '',
       });
+      setFiles([]);
     }
   }, [selectedRecord, form]);
 
@@ -126,7 +129,47 @@ export default function DoctorMedicalRecords() {
         diagnosis: '',
         prescription: '',
         notes: '',
+        documents: [],
       });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadDocuments = async (recordId: string) => {
+    if (!files.length) return;
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('documents', file);
+    });
+    formData.append('record_id', recordId);
+
+    try {
+      const response = await fetch('/api/medical-records/upload-documents', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Erreur lors du téléversement des documents');
+
+      return await response.json();
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Erreur lors du téléversement des documents');
+      return null;
     }
   };
 
@@ -144,27 +187,66 @@ export default function DoctorMedicalRecords() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionStorage.getItem('auth_token')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(values),
       });
       
-      if (!response.ok) throw new Error('Erreur de sauvegarde');
+      if (!response.ok) throw new Error('Erreur de sauvegarde du dossier');
       
       const data = await response.json();
       
+      let uploadedDocuments: MedicalDocument[] = [];
+      if (files.length > 0) {
+        const uploadResult = await uploadDocuments(data.id);
+        if (uploadResult) {
+          uploadedDocuments = uploadResult.documents;
+        }
+      }
+      
+      const updatedRecord = {
+        ...data,
+        documents: [...(data.documents || []), ...uploadedDocuments],
+      };
+      
       if (selectedRecord?.id) {
-        setRecords(records.map(r => r.id === data.id ? data : r));
+        setRecords(records.map(r => r.id === updatedRecord.id ? updatedRecord : r));
       } else {
-        setRecords([...records, data]);
+        setRecords([...records, updatedRecord]);
       }
       
       toast.success('Dossier médical enregistré avec succès');
-      setSelectedRecord(data);
+      setSelectedRecord(updatedRecord);
+      setFiles([]);
     } catch (error) {
       toast.error("Erreur lors de l'enregistrement du dossier");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const deleteDocument = async (documentId: string) => {
+    try {
+      const response = await fetch(`/api/medical-records/documents/${documentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Erreur de suppression');
+      
+      if (selectedRecord) {
+        const updatedRecord = {
+          ...selectedRecord,
+          documents: selectedRecord.documents?.filter(doc => doc.id !== documentId),
+        };
+        setSelectedRecord(updatedRecord);
+        setRecords(records.map(r => r.id === updatedRecord.id ? updatedRecord : r));
+        toast.success('Document supprimé avec succès');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la suppression du document');
     }
   };
 
@@ -260,7 +342,98 @@ export default function DoctorMedicalRecords() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                <span>Documents médicaux</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {selectedRecord.documents?.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between p-3 border rounded">
+                  <div className="flex items-center gap-3">
+                    <File className="w-5 h-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium">{doc.name}</p>
+                      <p className="text-sm text-gray-500">
+                        Ajouté le {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(doc.url, '_blank')}
+                    >
+                      Voir
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteDocument(doc.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">Ajouter des documents</label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer">
+                    <div className="flex flex-col items-center justify-center px-4 py-6 border-2 border-dashed rounded-lg hover:bg-gray-50 transition">
+                      <UploadCloud className="w-8 h-8 mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">
+                        {files.length ? 'Ajouter plus de fichiers' : 'Téléverser des documents'}
+                      </p>
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        multiple
+                      />
+                    </div>
+                  </label>
+                  
+                  {files.length > 0 && (
+                    <div className="flex-1 space-y-2">
+                      {files.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                          <File className="w-5 h-5 text-gray-500" />
+                          <span className="text-sm truncate flex-1">{file.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-5 h-5"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Formats acceptés : PDF, Word, JPG, PNG (max 10MB par fichier)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedRecord(null)}
+              disabled={isSubmitting}
+            >
+              Annuler
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
               {selectedRecord.id ? 'Mettre à jour' : 'Créer le dossier'}
@@ -300,30 +473,41 @@ export default function DoctorMedicalRecords() {
                   <TableHead>Patient</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Heure</TableHead>
+                  <TableHead>Statut</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {completedAppointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell className="font-medium">
-                      {appointment.patient_name}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(appointment.date).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                    <TableCell>
-                      {appointment.time}
-                    </TableCell>
-                    <TableCell>
-                      <Button onClick={() => handleSelectRecord(appointment)}>
-                        {records.some(r => r.appointment_id === appointment.id) 
-                          ? 'Voir le dossier' 
-                          : 'Créer un dossier'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {completedAppointments.map((appointment) => {
+                  const hasRecord = records.some(r => r.appointment_id === appointment.id);
+                  return (
+                    <TableRow key={appointment.id}>
+                      <TableCell className="font-medium">
+                        {appointment.patient_name}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(appointment.date).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                      <TableCell>
+                        {appointment.time}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          hasRecord 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {hasRecord ? 'Dossier complet' : 'À compléter'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleSelectRecord(appointment)}>
+                          {hasRecord ? 'Voir/Mettre à jour' : 'Créer dossier'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
