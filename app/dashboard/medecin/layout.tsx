@@ -37,6 +37,13 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
                   </button>
                 </a>
               </Link>
+              <Link href="/dashboard/medecin/medical-records" passHref legacyBehavior>
+                <a>
+                  <button className="w-full text-left px-4 py-2 rounded hover:bg-emerald-100 dark:hover:bg-gray-700 transition">
+                    Mes Dossiers Médicaux
+                  </button>
+                </a>
+              </Link>
 
               <button
                 onClick={() => router.push('/login')}
