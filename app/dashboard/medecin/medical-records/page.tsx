@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 const formSchema = z.object({
   patient_id: z.string(),
   appointment_id: z.string(),
+  patient_name: z.string().min(1, "Le nom du patient est requis"),
+  appointment_date: z.string(),
   diagnosis: z.string().min(3, 'Le diagnostic doit contenir au moins 3 caractères'),
   prescription: z.string().min(3, 'La prescription doit contenir au moins 3 caractères'),
   notes: z.string().optional(),
@@ -23,7 +25,7 @@ type MedicalDocument = {
   id: string;
   name: string;
   type: string;
-  url: string;
+  path: string;
   uploaded_at: string;
 };
 
@@ -37,8 +39,6 @@ type MedicalRecord = {
   prescription: string;
   notes?: string;
   documents?: MedicalDocument[];
-  created_at?: string;
-  updated_at?: string;
 };
 
 export default function DoctorMedicalRecords() {
@@ -56,6 +56,8 @@ export default function DoctorMedicalRecords() {
       patient_id: '',
       appointment_id: '',
       diagnosis: '',
+      patient_name: '', 
+      appointment_date: '',
       prescription: '',
       notes: '',
     },
@@ -77,24 +79,44 @@ export default function DoctorMedicalRecords() {
     try {
       setIsLoading(true);
       
-      const appointmentsResponse = await fetch('/api/Medecins/get-appointments', {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const appointmentsResponse = await fetch('http://127.0.0.1:8000/api/Medecins/get-appointments', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json', 
+        },
       });
       
       if (!appointmentsResponse.ok) throw new Error('Erreur de chargement des rendez-vous');
       
       const appointmentsData = await appointmentsResponse.json();
-      const completed = appointmentsData.filter((app: any) => app.status === 'completed');
+      const completed = appointmentsData.filter((app: any) => app.statut === 'completed');
       setCompletedAppointments(completed);
       
-      const recordsResponse = await fetch('/api/medical-records', {
-        headers: { 'Authorization': `Bearer ${token}` },
+      const recordsResponse = await fetch('http://127.0.0.1:8000/api/Medecins/get-medical-records', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',  
+        },
       });
       
       if (recordsResponse.ok) {
-        const recordsData = await recordsResponse.json();
-        setRecords(recordsData);
-      }
+        const data = await recordsResponse.json();
+        const getRecords: MedicalRecord[] = data.map((item: any) => ({
+          id: item.id,
+          patient_id: item.idPatient,
+          appointment_id: item.idRdv ?? '',
+          diagnosis: item.diagnostic,
+          patient_name: item.nomPatient,
+          appointment_date: item.dateRdv,
+          prescription: item.prescription,
+          notes: item.notes,
+          documents: item.documents || [],
+        }))
+         setRecords(getRecords);
+      };
+       
     } catch (error) {
       toast.error('Erreur de chargement des données');
     } finally {
@@ -108,6 +130,8 @@ export default function DoctorMedicalRecords() {
         patient_id: selectedRecord.patient_id,
         appointment_id: selectedRecord.appointment_id,
         diagnosis: selectedRecord.diagnosis,
+        patient_name: selectedRecord.patient_name, 
+        appointment_date: selectedRecord.appointment_date, 
         prescription: selectedRecord.prescription,
         notes: selectedRecord.notes || '',
       });
@@ -122,9 +146,9 @@ export default function DoctorMedicalRecords() {
       setSelectedRecord(existingRecord);
     } else {
       setSelectedRecord({
-        patient_id: appointment.patient_id,
+        patient_id: appointment.idPatient,
         appointment_id: appointment.id,
-        patient_name: appointment.patient_name,
+        patient_name: appointment.prenomNom,
         appointment_date: appointment.date,
         diagnosis: '',
         prescription: '',
@@ -145,68 +169,47 @@ export default function DoctorMedicalRecords() {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const uploadDocuments = async (recordId: string) => {
-    if (!files.length) return;
-
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append('documents', file);
-    });
-    formData.append('record_id', recordId);
-
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch('/api/medical-records/upload-documents', {
-        method: 'POST',
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append('patient_id', values.patient_id);
+      formData.append('appointment_id', values.appointment_id);
+      formData.append('diagnosis', values.diagnosis);
+      formData.append('prescription', values.prescription);
+      formData.append('patient_name', values.patient_name); 
+      formData.append('appointment_date', values.appointment_date); 
+      formData.append('notes', values.notes || '');
+      files.forEach(file => {
+        formData.append('documents[]', file);
+      });
+      
+      const url = selectedRecord?.id 
+        ? `http://127.0.0.1:8000/api/Medecins/update-medical-records/${selectedRecord.id}`
+        : 'http://127.0.0.1:8000/api/Medecins/create-medical-records';
+      
+      const response = await fetch(url, {
+        method: selectedRecord?.id ? 'PUT' : 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
         body: formData,
-      });
-
-      if (!response.ok) throw new Error('Erreur lors du téléversement des documents');
-
-      return await response.json();
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Erreur lors du téléversement des documents');
-      return null;
-    }
-  };
-
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      setIsSubmitting(true);
-      
-      const url = selectedRecord?.id 
-        ? `/api/medical-records/${selectedRecord.id}`
-        : '/api/medical-records';
-      
-      const method = selectedRecord?.id ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(values),
       });
       
       if (!response.ok) throw new Error('Erreur de sauvegarde du dossier');
       
       const data = await response.json();
       
-      let uploadedDocuments: MedicalDocument[] = [];
-      if (files.length > 0) {
-        const uploadResult = await uploadDocuments(data.id);
-        if (uploadResult) {
-          uploadedDocuments = uploadResult.documents;
-        }
-      }
-      
-      const updatedRecord = {
-        ...data,
-        documents: [...(data.documents || []), ...uploadedDocuments],
+      const updatedRecord: MedicalRecord = {
+        id: data.id ?? '',
+        patient_id: selectedRecord?.patient_id ?? '',
+        appointment_id: selectedRecord?.appointment_id ?? '',
+        patient_name: selectedRecord?.patient_name ?? '',
+        appointment_date: selectedRecord?.appointment_date ?? '',
+        diagnosis: data.diagnosis,
+        prescription: data.prescription,
+        notes: data.notes,
+        documents: data.documents || [],
       };
       
       if (selectedRecord?.id) {
@@ -365,7 +368,7 @@ export default function DoctorMedicalRecords() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(doc.url, '_blank')}
+                      onClick={() => window.open(doc.path, '_blank')}
                     >
                       Voir
                     </Button>
@@ -483,7 +486,7 @@ export default function DoctorMedicalRecords() {
                   return (
                     <TableRow key={appointment.id}>
                       <TableCell className="font-medium">
-                        {appointment.patient_name}
+                        {appointment.prenomNom}
                       </TableCell>
                       <TableCell>
                         {new Date(appointment.date).toLocaleDateString('fr-FR')}
