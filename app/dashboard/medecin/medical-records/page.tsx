@@ -183,13 +183,16 @@ export default function DoctorMedicalRecords() {
       files.forEach(file => {
         formData.append('documents[]', file);
       });
+      if (selectedRecord?.id) {
+        formData.append('idRecord', selectedRecord.id); 
+      }
       
       const url = selectedRecord?.id 
-        ? `http://127.0.0.1:8000/api/Medecins/update-medical-records/${selectedRecord.id}`
-        : 'http://127.0.0.1:8000/api/Medecins/create-medical-records';
+        ? 'http://127.0.0.1:8000/api/Medecins/update-medical-record'
+        : 'http://127.0.0.1:8000/api/Medecins/create-medical-record';
       
       const response = await fetch(url, {
-        method: selectedRecord?.id ? 'PUT' : 'POST',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -201,17 +204,16 @@ export default function DoctorMedicalRecords() {
       const data = await response.json();
       
       const updatedRecord: MedicalRecord = {
-        id: data.id ?? '',
-        patient_id: selectedRecord?.patient_id ?? '',
-        appointment_id: selectedRecord?.appointment_id ?? '',
-        patient_name: selectedRecord?.patient_name ?? '',
-        appointment_date: selectedRecord?.appointment_date ?? '',
-        diagnosis: data.diagnosis,
+        id: data.id,
+        patient_id: data.idPatient,
+        appointment_id: data.idRdv,
+        patient_name: data.nomPatient,
+        appointment_date: data.dateRdv,
+        diagnosis: data.diagnostic,
         prescription: data.prescription,
         notes: data.notes,
         documents: data.documents || [],
       };
-      
       if (selectedRecord?.id) {
         setRecords(records.map(r => r.id === updatedRecord.id ? updatedRecord : r));
       } else {
@@ -230,11 +232,14 @@ export default function DoctorMedicalRecords() {
 
   const deleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`/api/medical-records/documents/${documentId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/delete-file`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',  
         },
+        body: JSON.stringify({ documentId })
       });
       
       if (!response.ok) throw new Error('Erreur de suppression');
@@ -368,13 +373,14 @@ export default function DoctorMedicalRecords() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(doc.path, '_blank')}
+                      onClick={() => window.open(`http://localhost:8000/storage/${doc.path}`, '_blank')}
                     >
                       Voir
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
+                      type="button"
                       onClick={() => deleteDocument(doc.id)}
                     >
                       Supprimer

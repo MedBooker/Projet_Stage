@@ -44,9 +44,11 @@ export default function AppointmentsPage() {
           idCreneau: appt.idCreneau,
           status: appt.statut || 'confirmé'
         }));
-
-        (formattedAppointments as Appointment[]).sort((a: Appointment, b: Appointment) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        setAppointments(formattedAppointments);
+        const filteredAppointments = formattedAppointments.filter((appt: Appointment) => 
+          appt.status === 'cancelled' || appt.status === 'upcoming'
+        );
+        (filteredAppointments as Appointment[]).sort((a: Appointment, b: Appointment) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setAppointments(filteredAppointments);
       } catch (error) {
         console.error('Erreur:', error);
       }
