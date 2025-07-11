@@ -40,6 +40,10 @@ Route::prefix('Medecins')->group(function () {
         Route::get('get-schedule', [MedecinController::class, 'getSchedule']);
         Route::delete('delete-schedule', [MedecinController::class, 'deleteSchedule']);
         Route::patch('complete-appointment', [MedecinController::class, 'completeAppointment']);
+        Route::get('get-medical-records', [MedecinController::class, 'getMedicalRecords']);
+        Route::post('create-medical-record', [MedecinController::class, 'createMedicalRecord']);
+        Route::post('update-medical-record', [MedecinController::class, 'updateMedicalRecord']);
+        Route::delete('delete-file', [MedecinController::class, 'deleteFile']);
     });
 });
 

@@ -23,6 +23,5 @@ class Medecin extends Authenticatable
 
     public function creneaux() {
         return $this->hasMany(CreneauHoraire::class, 'idMedecin', '_id');
-
     }
 }

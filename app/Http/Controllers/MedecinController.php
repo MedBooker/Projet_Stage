@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use DateTime;
 use Carbon\Carbon;
+use App\Models\Suivi;
 use App\Models\Medecin;
 use App\Models\RendezVous;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
+use App\Models\DossierMedical;
 use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
 
@@ -89,7 +91,6 @@ class MedecinController extends Controller
         $medecin = $request->user('medecin');
          $creneauxFormates = [];
 
-    // Formatage avec foreach
         foreach ($request->creneaux as $creneau) {
             $creneauxFormates[] = [
                 'idCreneau' => 'creneau' . uniqid(),
@@ -208,6 +209,110 @@ class MedecinController extends Controller
         }
         return response()->json([
             'message' => 'Rendez-vous marqué comme effectué'
+        ], 200);
+    }
+
+    public function getMedicalRecords(Request $request) {
+        $medecin = $request->user('medecin');
+        $records = DossierMedical::whereHas('suivis', function ($query) use ($medecin) {
+             $query->where('idMedecin', $medecin->_id);
+        })->get();
+        return response()->json($records, 200);
+    }
+    
+    public function createMedicalRecord(Request $request) {
+        $medecin = $request->user('medecin');
+        $request->validate([
+            'patient_id' => 'required',
+            'appointment_id' => 'required',
+            'diagnosis' => 'required',
+            'prescription' => 'required',
+            'patient_name' => 'required',
+            'appointment_date' => 'required',
+            'notes' => 'required',
+            'documents' => 'sometimes|array|min:1', 
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240'
+        ]);
+        $documentPaths = [];
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $document) {
+                $path = $document->store('documents', 'public');
+                $documentPaths[] = [
+                    'id' => 'file' . uniqid(),
+                    'name' => $document->getClientOriginalName(),
+                    'path' => $path,
+                    'type' => $document->getMimeType(),
+                ];
+            }
+        }
+        $medicalRecord = DossierMedical::create([
+            'idPatient' => $request->patient_id,
+            'idRdv' => $request->appointment_id,
+            'diagnostic' => $request->diagnosis,
+            'prescription' => $request->prescription,
+            'notes' => $request->notes,
+            'nomPatient' => $request->patient_name,
+            'dateRdv' => $request->appointment_date,
+            'documents' => $documentPaths
+        ]);
+        Suivi::create([
+            'idDossier' => $medicalRecord->_id,
+            'idMedecin' => $medecin->_id
+        ]);
+        return response()->json([
+            'message' => 'Le dossier medical a ete creer avec succes',
+            'id' => $medicalRecord->_id,
+            'diagnosis' => $medicalRecord->diagnostic,
+            'prescription' => $medicalRecord->prescription,
+            'notes' => $medicalRecord->notes,
+            'documents' => $medicalRecord->documents,
+        ], 200);
+    }
+
+    public function updateMedicalRecord(Request $request) {
+        $request->validate([
+            'diagnosis' => 'required',
+            'prescription' => 'required',
+            'notes' => 'required',
+            'idRecord' => 'required',
+            'documents' => 'sometimes|array|min:1', 
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240'
+        ]);
+        $record = DossierMedical::where('_id', $request->idRecord)->first();
+        $documentPaths = $record->documents ?? []; 
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $document) {
+                $path = $document->store('documents', 'public');
+                $documentPaths[] = [
+                    'id' => 'file' . uniqid(),
+                    'name' => $document->getClientOriginalName(),
+                    'path' => $path,
+                    'type' => $document->getMimeType(),
+                ];
+            }
+        }
+        $record->update([
+            'diagnostic' => $request->diagnosis,
+            'prescription' => $request->prescription,
+            'notes' => $request->notes,
+            'documents' => $documentPaths
+        ]);
+        return response()->json($record, 200);
+    }
+
+    public function deleteFile(Request $request) {
+        $request->validate([
+            'documentId' => 'required|string' 
+        ]);
+        $file = DossierMedical::where('documents.id', $request->documentId)->first();
+        if ($file) {
+            $file->pull(
+                'documents', [
+                    'id' => $request->documentId 
+                ]);
+        }
+        return response()->json([
+            'message' => 'Fichier supprimé avec succès'
         ], 200);
     }
 }
