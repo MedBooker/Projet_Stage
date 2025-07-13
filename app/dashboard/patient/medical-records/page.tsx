@@ -30,7 +30,7 @@ export default function PatientMedicalRecordsPage() {
     const fetchMedicalDocuments = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Patients/medical-documents', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/medical-documents`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export default function PatientMedicalRecordsPage() {
   
   const downloadDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/Patients/documents-download`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/documents-download`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
