@@ -43,7 +43,7 @@ type MedicalRecord = {
 
 export default function DoctorMedicalRecords() {
   const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [completedAppointments, setCompletedAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,8 +90,8 @@ export default function DoctorMedicalRecords() {
       if (!appointmentsResponse.ok) throw new Error('Erreur de chargement des rendez-vous');
       
       const appointmentsData = await appointmentsResponse.json();
-      const completed = appointmentsData.filter((app: any) => app.statut === 'completed');
-      setCompletedAppointments(completed);
+      const activeAppointments = appointmentsData.filter((app: any) => app.statut !== 'cancelled');
+      setAppointments(activeAppointments);
       
       const recordsResponse = await fetch('http://127.0.0.1:8000/api/Medecins/get-medical-records', {
         headers: { 
@@ -140,7 +140,7 @@ export default function DoctorMedicalRecords() {
   }, [selectedRecord, form]);
 
   const handleSelectRecord = (appointment: any) => {
-    const existingRecord = records.find(r => r.appointment_id === appointment.id);
+    const existingRecord = records.find(r => r.patient_id === appointment.idPatient);
     
     if (existingRecord) {
       setSelectedRecord(existingRecord);
@@ -219,7 +219,7 @@ export default function DoctorMedicalRecords() {
       } else {
         setRecords([...records, updatedRecord]);
       }
-      
+
       toast.success('Dossier médical enregistré avec succès');
       setSelectedRecord(updatedRecord);
       setFiles([]);
@@ -467,7 +467,7 @@ export default function DoctorMedicalRecords() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {completedAppointments.length === 0 ? (
+          {appointments.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-lg font-medium">Aucune consultation effectuée</h3>
@@ -487,8 +487,8 @@ export default function DoctorMedicalRecords() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {completedAppointments.map((appointment) => {
-                  const hasRecord = records.some(r => r.appointment_id === appointment.id);
+                {appointments.map((appointment) => {
+                  const hasRecord = records.some(r => r.patient_id === appointment.idPatient);
                   return (
                     <TableRow key={appointment.id}>
                       <TableCell className="font-medium">
