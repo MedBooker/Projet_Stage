@@ -11,6 +11,6 @@ class Suivi extends Model
     protected $collection = 'suivis';
     protected $fillable = [
         'idDossier',
-        'idMedecin',
+        'idMedecins',
     ];
 }

@@ -11,6 +11,7 @@ use App\Models\RendezVous;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
+use App\Models\DossierMedical;
 use App\Models\PendingPatient;
 use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
@@ -333,5 +334,33 @@ class PatientController extends Controller
             'message' => 'Toutes les notifications ont été marquées comme lues',
             'notification' => $notifications
         ], 200);
+    }
+
+    public function medicalDocuments(Request $request) {
+        $patient = $request->user('patient');
+        $records = DossierMedical::where('idPatient', $patient->_id)->get();
+        return response()->json($records, 200);
+    }
+
+    public function documentsDownload(Request $request) {
+        $request->validate([
+            'documentId' => 'required'
+        ]);
+        $document = DossierMedical::where('documents._id', $request->documentId)->first();
+
+        if (!$document) {
+            return response()->json([
+                'message' => 'Document non trouvé'
+            ], 404);
+        }
+        $filePath = storage_path('app/public/' . $document->documents[0]['path']); 
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'message' => 'Fichier non trouvé'
+            ], 404);
+        }
+        return response()->download($filePath, $document->documents[0]['name'], [
+            'Content-Type' => $document->documents[0]['type'], 
+        ]);
     }
 }

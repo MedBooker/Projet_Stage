@@ -154,14 +154,15 @@ class MedecinController extends Controller
                        ->where('jours.idCreneau', $request->idCreneau)   
                        ->where('idMedecin', $medecin->_id)
                        ->first();
-        if ($schedule) {
-             $schedule->pull(
-                'jours', [
-                    'idCreneau' => $request->idCreneau
-                ]);
+        if (!$schedule) {
+            return response()->json([
+                'message' => 'Créneau non trouvé'
+            ], 404);
         }
+        $schedule->pull('jours', ['idCreneau' => $request->idCreneau]);
+        
         $empty = CreneauHoraire::where('_id', $request->id)->first();
-        if(count($empty->jours) <= 0) {
+        if($empty && count($empty->jours) <= 0) {
             $empty->delete();
         }
         $appointmentsToCancel = RendezVous::where('idCreneau', $request->idCreneau)->get();
@@ -214,9 +215,7 @@ class MedecinController extends Controller
 
     public function getMedicalRecords(Request $request) {
         $medecin = $request->user('medecin');
-        $records = DossierMedical::whereHas('suivis', function ($query) use ($medecin) {
-             $query->where('idMedecin', $medecin->_id);
-        })->get();
+        $records = DossierMedical::all();
         return response()->json($records, 200);
     }
     
@@ -255,14 +254,22 @@ class MedecinController extends Controller
             'dateRdv' => $request->appointment_date,
             'documents' => $documentPaths
         ]);
+        $idMedecins = [];
+        $idMedecins[] = [
+            'idMedecin' => $medecin->_id
+        ];
         Suivi::create([
             'idDossier' => $medicalRecord->_id,
-            'idMedecin' => $medecin->_id
+            'idMedecins' => $idMedecins
         ]);
         return response()->json([
             'message' => 'Le dossier medical a ete creer avec succes',
             'id' => $medicalRecord->_id,
-            'diagnosis' => $medicalRecord->diagnostic,
+            'idPatient' => $medicalRecord->idPatient,
+            'idRdv' => $medicalRecord->idRdv,
+            'nomPatient' => $medicalRecord->nomPatient,
+            'dateRdv' => $medicalRecord->dateRdv,
+            'diagnostic' => $medicalRecord->diagnostic,
             'prescription' => $medicalRecord->prescription,
             'notes' => $medicalRecord->notes,
             'documents' => $medicalRecord->documents,
@@ -270,6 +277,7 @@ class MedecinController extends Controller
     }
 
     public function updateMedicalRecord(Request $request) {
+        $medecin = $request->user('medecin');
         $request->validate([
             'diagnosis' => 'required',
             'prescription' => 'required',
@@ -297,7 +305,17 @@ class MedecinController extends Controller
             'notes' => $request->notes,
             'documents' => $documentPaths
         ]);
-        return response()->json($record, 200);
+        $suivi = Suivi::where('idDossier', $request->idRecord)->first();
+        if ($suivi) {
+            $existingMedecins = array_column($suivi->idMedecins, 'idMedecin');
+            if (!in_array($medecin->_id, $existingMedecins)) {
+                $suivi->idMedecins[] = [
+                    'idMedecin' => $medecin->_id
+                ];
+                $suivi->save();
+            }
+            return response()->json($record, 200);
+        }
     }
 
     public function deleteFile(Request $request) {

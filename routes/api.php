@@ -25,6 +25,8 @@ Route::prefix('Patients')->group(function () {
         Route::post('notifications', [PatientController::class, 'Notifications']);
         Route::patch('notifications/read', [PatientController::class, 'markAsRead']);
         Route::patch('notifications/mark-all-read', [PatientController::class, 'markAllRead']);
+        Route::get('medical-documents', [PatientController::class, 'medicalDocuments']);
+        Route::post('documents-download', [PatientController::class, 'documentsDownload']);
     });
 });
 

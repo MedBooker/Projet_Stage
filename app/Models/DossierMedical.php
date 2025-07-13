@@ -19,8 +19,4 @@ class DossierMedical extends Model
         'nomPatient',
         'dateRdv' 
     ];
-
-    public function suivis() {
-        return $this->hasMany(Suivi::class, 'idDossier', '_id');
-    }
 }
