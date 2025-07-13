@@ -67,7 +67,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
         throw new Error('Non authentifié');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/count-new-notifications', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/count-new-notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

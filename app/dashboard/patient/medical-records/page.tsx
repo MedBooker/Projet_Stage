@@ -26,40 +26,59 @@ export default function PatientMedicalRecordsPage() {
     setToken(sessionStorage.getItem('auth_token'));
   }, []);
 
-  const fetchMedicalDocuments = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get('/api/Patients/medical-documents', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-      setDocuments(response.data);
-    } catch (error) {
-      toast.error('Erreur lors du chargement des documents');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchMedicalDocuments();
-  }, []);
-
+    const fetchMedicalDocuments = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/Patients/medical-documents', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Erreur de chargement des dossiers medicaux');
+        }
+        const data = await response.json();
+        const allDocuments = data.flatMap((item: any) =>
+          (item.documents || []).map((doc: any) => ({
+            id: doc.id,
+            name: doc.name,
+            path: doc.path,
+            type: doc.type,
+            date: item.dateRdv,
+            doctor: 'Dr'
+          }))
+        );
+        setDocuments(allDocuments);
+      } catch (error) {
+          toast.error('Erreur lors du chargement des documents');
+      } finally {
+          setIsLoading(false);
+      }
+    };
+    if(token)
+      fetchMedicalDocuments()
+  }, [token]);
+  
   const downloadDocument = async (documentId: string) => {
     try {
-      const response = await axios.get(`/api/Patients/documents/${documentId}/download`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/Patients/documents-download`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        responseType: 'blob'
+        body: JSON.stringify({documentId})
       });
+      if (!response.ok) {
+        throw new Error('Erreur de téléchargement');
+      }
+      const blob = await response.blob();
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', documents.find(doc => doc.id === documentId)?.name || 'document');

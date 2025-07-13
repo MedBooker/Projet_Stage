@@ -67,7 +67,7 @@ export default function NotificationsPage() {
         throw new Error('Non authentifié');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/notifications', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/notifications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -96,7 +96,7 @@ export default function NotificationsPage() {
     try {
       const token = sessionStorage.getItem('auth_token');
       
-      await fetch(`http://127.0.0.1:8000/api/Patients/notifications/read`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/notifications/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -118,7 +118,7 @@ export default function NotificationsPage() {
     try {
       const token = sessionStorage.getItem('auth_token');
       
-      await fetch('http://127.0.0.1:8000/api/Patients/notifications/mark-all-read', {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/notifications/mark-all-read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

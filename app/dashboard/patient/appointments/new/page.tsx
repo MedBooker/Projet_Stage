@@ -83,7 +83,7 @@ export default function NewAppointmentPage() {
 
     const getSpecialties = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Patients/get-specialties', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/get-specialties`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function NewAppointmentPage() {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Patients/get-doctors', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/get-doctors`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ export default function NewAppointmentPage() {
       reason: data.reason,
     };
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/create-appointment', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/create-appointment`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -234,7 +234,7 @@ export default function NewAppointmentPage() {
         throw new Error('Échec de la création du rendez-vous');
       }
       const responseData = await response.json();
-      const patientLimitResponse = await fetch('http://127.0.0.1:8000/api/Patients/patient-limit', {
+      const patientLimitResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/patient-limit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
