@@ -8,10 +8,10 @@ if (typeof window !== 'undefined') {
   echoInstance = new Echo({
     broadcaster: 'reverb',
     key: process.env.NEXT_PUBLIC_REVERB_APP_KEY,
-    wsHost: process.env.NEXT_PUBLIC_REVERB_HOST || 'localhost',
+    wsHost: process.env.NEXT_PUBLIC_REVERB_HOST,
     wssPort: process.env.NEXT_PUBLIC_REVERB_PORT || 443,
-    wsPort:  process.env.NEXT_PUBLIC_REVERB_PORT || 80,
-    forceTLS: (process.env.NEXT_PUBLIC_REVERB_SCHEME ?? 'https') === 'https',
+    wsPort:  process.env.NEXT_PUBLIC_REVERB_PORT,
+    forceTLS: true,
     authEndpoint: 'https://backend-latest-hcw2.onrender.com/broadcasting/auth',
     auth: {
       headers: {
