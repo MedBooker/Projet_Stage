@@ -12,7 +12,7 @@ if (typeof window !== 'undefined') {
     wssPort: process.env.NEXT_PUBLIC_REVERB_PORT || 443,
     wsPort:  process.env.NEXT_PUBLIC_REVERB_PORT || 80,
     forceTLS: (process.env.NEXT_PUBLIC_REVERB_SCHEME ?? 'https') === 'https',
-    authEndpoint: 'http://localhost:8000/broadcasting/auth',
+    authEndpoint: 'https://backend-latest-hcw2.onrender.com/broadcasting/auth',
     auth: {
       headers: {
         Authorization: `Bearer ${sessionStorage.getItem('auth_token')}`
