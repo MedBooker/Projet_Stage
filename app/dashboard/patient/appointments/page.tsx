@@ -40,7 +40,7 @@ export default function AppointmentsPage() {
   useEffect(() => {
     const getAppointments = async () => {
     try {
-      const response = await fetch ('http://127.0.0.1:8000/api/Patients/get-appointments', {
+      const response = await fetch (`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/get-appointments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export default function AppointmentsPage() {
     //   appt.id === id ? { ...appt, status: 'cancelled', notes: 'Rendez-vous annulé' } : appt
     // ));
     
-    const response = await fetch(`http://127.0.0.1:8000/api/Patients/delete-appointments`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/delete-appointments`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`, 

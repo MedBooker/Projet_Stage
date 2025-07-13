@@ -40,7 +40,7 @@ export default function ProfilePage() {
       setIsLoading(true);
 
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Patients/profile', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export default function ProfilePage() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Patients/update-profile', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/update-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
