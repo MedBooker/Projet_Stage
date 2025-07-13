@@ -79,7 +79,7 @@ export default function DoctorMedicalRecords() {
     try {
       setIsLoading(true);
       
-      const appointmentsResponse = await fetch('http://127.0.0.1:8000/api/Medecins/get-appointments', {
+      const appointmentsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/get-appointments`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ export default function DoctorMedicalRecords() {
       const activeAppointments = appointmentsData.filter((app: any) => app.statut !== 'cancelled');
       setAppointments(activeAppointments);
       
-      const recordsResponse = await fetch('http://127.0.0.1:8000/api/Medecins/get-medical-records', {
+      const recordsResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/get-medical-records`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -188,8 +188,8 @@ export default function DoctorMedicalRecords() {
       }
       
       const url = selectedRecord?.id 
-        ? 'http://127.0.0.1:8000/api/Medecins/update-medical-record'
-        : 'http://127.0.0.1:8000/api/Medecins/create-medical-record';
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/update-medical-record`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/create-medical-record`;
       
       const response = await fetch(url, {
         method: 'POST',
@@ -232,7 +232,7 @@ export default function DoctorMedicalRecords() {
 
   const deleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/delete-file`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/delete-file`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -23,7 +23,7 @@ export default function AppointmentsPage() {
   useEffect(() => {
     const getAppointments = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Medecins/get-appointments', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/get-appointments`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export default function AppointmentsPage() {
 
   const completeAppointment = async (id: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/complete-appointment/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/complete-appointment/`, {
         method: 'PATCH',
         headers: {
         'Authorization': `Bearer ${token}`,

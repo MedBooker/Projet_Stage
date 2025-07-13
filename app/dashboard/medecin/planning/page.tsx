@@ -58,7 +58,7 @@ export default function PlanningPage() {
 const fetchCreneaux = async (authToken: string) => {
   setLoading(true);
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/Medecins/get-schedule', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/get-schedule`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Accept': 'application/json'
@@ -110,7 +110,7 @@ const fetchCreneaux = async (authToken: string) => {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Medecins/add-schedule', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/add-schedule`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ const fetchCreneaux = async (authToken: string) => {
     if (!confirm("Voulez-vous vraiment supprimer ce créneau ?")) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/Medecins/delete-schedule`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/delete-schedule`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -33,7 +33,7 @@ export default function MedecinDashboard() {
   useEffect(() => {
     const getInfos = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/Medecins/profile', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ export default function MedecinDashboard() {
 
   useEffect(() => {
     const getAppointments = async () => {
-      const response = await fetch('http://127.0.0.1:8000/api/Medecins/get-appointments', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/get-appointments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
