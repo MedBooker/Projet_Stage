@@ -12,6 +12,7 @@ if (typeof window !== 'undefined') {
     wssPort: process.env.NEXT_PUBLIC_REVERB_PORT || 443,
     wsPort:  process.env.NEXT_PUBLIC_REVERB_PORT,
     forceTLS: true,
+    enabledTransports: ['ws', 'wss'],
     authEndpoint: 'https://backend-latest-hcw2.onrender.com/broadcasting/auth',
     auth: {
       headers: {
