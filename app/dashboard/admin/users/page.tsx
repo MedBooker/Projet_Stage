@@ -22,7 +22,7 @@ export default function UsersPage() {
     const fetchMedecins = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
-        const response = await fetch('http://127.0.0.1:8000/api/Admin/get-medecins', {
+        const response = await fetch('${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/get-medecins', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -48,7 +48,7 @@ export default function UsersPage() {
     try {
       const token = sessionStorage.getItem('auth_token');
       console.log('test', id);
-      const response = await fetch(`http://127.0.0.1:8000/api/Admin/toggle-status`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/toggle-status`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

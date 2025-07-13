@@ -27,7 +27,7 @@ useEffect(() => {
       const token = sessionStorage.getItem('auth_token');
       if (!token) throw new Error('Authentication required');
 
-      const response = await fetch('http://127.0.0.1:8000/api/Admin/get-patients', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/get-patients`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
