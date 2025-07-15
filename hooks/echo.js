@@ -13,7 +13,7 @@ if (typeof window !== 'undefined') {
     wsPort:  process.env.NEXT_PUBLIC_REVERB_PORT,
     forceTLS: true,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'https://backend-latest-hcw2.onrender.com/broadcasting/auth',
+    authEndpoint: 'https://laravel-web-latest.onrender.com/broadcasting/auth',
     auth: {
       headers: {
         Authorization: `Bearer ${sessionStorage.getItem('auth_token')}`
