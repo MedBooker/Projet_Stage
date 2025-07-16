@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   if (isAuthenticated && isMounted) {
     router.push('/dashboard/patient');
-    return null;
+    return null; 
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
