@@ -25,5 +25,6 @@ npm-debug.log
 Thumbs.db
 yarn-error.log
 dockerfile
-Dockerfile
+Dockerfile.*
+docker-compose.yml
 start.sh

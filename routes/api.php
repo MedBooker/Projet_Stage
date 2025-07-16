@@ -11,6 +11,8 @@ Route::prefix('Patients')->group(function () {
     Route::post('register-request', [PatientController::class, 'registerRequest']);
     Route::post('/verify-email/{token}', [PatientController::class, 'verifyEmail']);
     Route::post('login', [PatientController::class, 'login']);
+    Route::post('verify-mail', [PatientController::class, 'verifyMail']);
+    Route::post('modify-password/{token}', [PatientController::class, 'modifyPassword']);
 
     Route::middleware('auth:patient')->group(function () {
         Route::get('profile', [PatientController::class, 'profile']);
