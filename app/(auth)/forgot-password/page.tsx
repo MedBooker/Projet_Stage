@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/verify-mail/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/verify-mail`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
