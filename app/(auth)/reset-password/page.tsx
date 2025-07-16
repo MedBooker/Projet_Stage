@@ -1,8 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
-// import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,20 +15,22 @@ const passwordSchema = z.string().min(8, "8 caractères minimum")
   .regex(/[!@#$%^&*]/, "Doit contenir un caractère spécial");
 
 export default function ResetPasswordPage() {
-  // const searchParams = useSearchParams();
-  // const token = searchParams.get('token');
-  // const email = searchParams.get('email');
-
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const token = useSearchParams().get('token');
+  const [token, setToken] = useState<string | null>(null);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromURL = params.get('token');
+    setToken(tokenFromURL);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
