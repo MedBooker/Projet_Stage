@@ -41,6 +41,7 @@ export default function MedecinDashboard() {
           }
         });
         const data = await response.json();
+        
         console.log(data);
         setNom(data.nom);
         setPrenom(data.prenom);
