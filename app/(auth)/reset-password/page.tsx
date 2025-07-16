@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 // import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ export default function ResetPasswordPage() {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const token = useSearchParams().get('token');
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
@@ -54,8 +56,23 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Patients/modify-password/${token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ password: formData.password })
+      });
+      const data = await response.json();
 
+      if (!response.ok) {
+        toast.error("Erreur d'authentification", {
+          description: "Utilisateur non authorisé a modifier son mot de passe",
+        });
+        return;
+      }
+      
       toast.success("Mot de passe mis à jour", {
         description: "Votre mot de passe a été réinitialisé avec succès",
         action: {
