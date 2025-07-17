@@ -51,7 +51,7 @@ class PatientController extends Controller
             'assurance' => $request->assurance
         ]);
         $token = $pendingPatient->createToken('verify_token')->plainTextToken;
-        $url = env('FRONTEND_URL') . '/verify-email?token=' . $token;
+        $url = env('FRONTEND_URL_PATIENT') . '/verify-email?token=' . $token;
         Mail::to($pendingPatient->adresseMail)->send(new ConfirmMail($pendingPatient->nom, $pendingPatient->prenom, $url));
         return response()->json([
             'message' => 'Patient créé avec succès',
@@ -129,7 +129,7 @@ class PatientController extends Controller
         $patient = Patient::where('adresseMail', $request->email)->first();
         if ($patient) {
             $token = $patient->createToken('mail_token')->plainTextToken;
-            $url = env('FRONTEND_URL') . '/reset-password?token=' . $token;
+            $url = env('FRONTEND_URL_PATIENT') . '/reset-password?token=' . $token;
             Mail::to($patient->adresseMail)->send(new ResetPassword($patient->nom, $patient->prenom, $url));
             return response()->json([
                 'message' => 'Un mail a ete envoye a votre adresse'
