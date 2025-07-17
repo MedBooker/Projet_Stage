@@ -18,13 +18,27 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Medecins/verify-mail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error("Erreur d'authentification", {
+          description: "L'email fourni est incorrect",
+        });
+        return;
+      }
       
       toast.success("Email envoyé", {
         description: "Un lien de réinitialisation a été envoyé à votre adresse email",
       });
       
-      router.push('/forgot-password/confirm');
+      router.push('/');
     } catch (error) {
       toast.error("Erreur", {
         description: "Une erreur est survenue lors de l'envoi de l'email",
