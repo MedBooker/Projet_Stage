@@ -6,8 +6,8 @@ use DateTime;
 use Carbon\Carbon;
 use App\Models\Suivi;
 use App\Models\Medecin;
-use App\Mail\ConfirmMail;
 use App\Models\RendezVous;
+use App\Mail\ResetPassword;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\CreneauHoraire;
@@ -80,7 +80,7 @@ class MedecinController extends Controller
         if ($medecin) {
             $token = $medecin->createToken('mail_token')->plainTextToken;
             $url = env('FRONTEND_URL_DOCTOR') . '/reset-password?token=' . $token;
-            Mail::to($medecin->adresseMail)->send(new ConfirmMail($medecin->nom, $medecin->prenom, $url));
+            Mail::to($medecin->adresseMail)->send(new ResetPassword($medecin->nom, $medecin->prenom, $url));
             return response()->json([
                 'message' => 'Un mail a ete envoye a votre adresse'
             ], 200);
