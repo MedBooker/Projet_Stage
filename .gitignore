@@ -28,3 +28,4 @@ dockerfile
 Dockerfile.*
 docker-compose.yml
 start.sh
+deploy.sh
