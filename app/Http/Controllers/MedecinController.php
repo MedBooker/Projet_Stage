@@ -6,6 +6,7 @@ use DateTime;
 use Carbon\Carbon;
 use App\Models\Suivi;
 use App\Models\Medecin;
+use App\Mail\ConfirmMail;
 use App\Models\RendezVous;
 use App\Models\Notification;
 use Illuminate\Http\Request;
@@ -13,6 +14,8 @@ use App\Models\CreneauHoraire;
 use App\Models\DossierMedical;
 use App\Events\NotificationSent;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class MedecinController extends Controller
 {
@@ -66,6 +69,44 @@ class MedecinController extends Controller
             'prenom' => $medecin->prenom,
             'nom' => $medecin->nom,
             'email' => $medecin->adresseMail,
+        ]);
+    }
+
+    public function verifyMail(Request $request) {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+        $medecin = Medecin::where('adresseMail', $request->email)->first();
+        if ($medecin) {
+            $token = $medecin->createToken('mail_token')->plainTextToken;
+            $url = env('FRONTEND_URL_DOCTOR') . '/reset-password?token=' . $token;
+            Mail::to($medecin->adresseMail)->send(new ConfirmMail($medecin->nom, $medecin->prenom, $url));
+            return response()->json([
+                'message' => 'Un mail a ete envoye a votre adresse'
+            ], 200);
+        }
+        return response()->json([
+            'message' => 'Mail invalide'
+        ], 400);
+    }
+
+    public function modifyPassword(Request $request, $token) {
+        $request->validate([
+            'password' => 'required'
+        ]);
+        $personalToken = PersonalAccessToken::findToken($token);
+        if (!$personalToken) {
+            return response()->json([
+                'message' => 'Token invalide ou expiré.'
+            ], 400);
+        }
+        $medecin = $personalToken->tokenable;
+        $medecin->update([
+            'motDePasse' => bcrypt($request->password)
+        ]);
+        $personalToken->delete();
+        return response()->json([
+             'message' => 'Votre mot de passe a été modifié avec succès !',
         ]);
     }
 

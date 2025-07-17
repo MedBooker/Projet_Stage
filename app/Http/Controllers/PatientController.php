@@ -159,8 +159,7 @@ class PatientController extends Controller
              'message' => 'Votre mot de passe a été modifié avec succès !',
         ]);
     }
-
-
+    
     public function profile(Request $request) {
         $patient = $request->user('patient');
         return response()->json([
