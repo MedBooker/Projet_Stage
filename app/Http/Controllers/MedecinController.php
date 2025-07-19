@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AppointmentCancelledMail;
 use DateTime;
 use Carbon\Carbon;
 use App\Models\Suivi;
 use App\Models\Medecin;
+use App\Models\Patient;
 use App\Models\RendezVous;
 use App\Mail\ResetPassword;
 use App\Models\Notification;
@@ -213,6 +215,7 @@ class MedecinController extends Controller
             ]);
         }
         foreach($appointmentsToCancel as $rdv) {
+            $patient = Patient::find( $rdv->idPatient);
             $date = new DateTime($rdv->date);
             $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE);
             $formattedDate = $formatter->format($date);
@@ -232,6 +235,7 @@ class MedecinController extends Controller
                                             ->where('isRead', false)
                                             ->count();
                 broadcast(new NotificationSent($rdv->idPatient, $unreadCount));
+                Mail::to($patient->adresseMail)->send(new AppointmentCancelledMail($patient->nom, $patient->prenom, $rdv->creneau, $rdv->medecin, $rdv->date));
             }       
         };
         return response()->json([
