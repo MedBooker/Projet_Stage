@@ -107,6 +107,7 @@ export default function UsersPage() {
                         : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300'
                     }`}>
                       {medecin.statut}
+                      
                     </Badge>
                   </td>
                   <td>
