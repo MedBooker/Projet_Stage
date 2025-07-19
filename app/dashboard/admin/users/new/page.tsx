@@ -30,7 +30,7 @@ useEffect(() => {
 const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/Admin/register-doctor', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/register-doctor`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
