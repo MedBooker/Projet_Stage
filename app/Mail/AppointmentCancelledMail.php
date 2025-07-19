@@ -37,7 +37,7 @@ class AppointmentCancelledMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Rendez Vous annule',
+            subject: 'Rendez-vous annulé',
         );
     }
 
