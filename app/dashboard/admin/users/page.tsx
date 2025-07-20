@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { useRouter } from 'next/router'; 
+import { useRouter } from 'next/navigation'; 
 
 interface Medecin {
   id: string;
