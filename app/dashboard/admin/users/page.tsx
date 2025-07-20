@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useRouter } from 'next/router'; 
 
 interface Medecin {
   id: string;
@@ -17,6 +18,7 @@ interface Medecin {
 export default function UsersPage() {
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMedecins = async () => {
@@ -79,9 +81,12 @@ export default function UsersPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <h2 className="text-2xl font-semibold mb-6">Liste des Médecins</h2>
-      <a href="http://localhost:3000/dashboard/admin/users/new" className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition-colors mb-4 inline-block">
+      <button 
+        onClick={() => router.push('/dashboard/admin/users/new')} 
+        className="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 transition-colors mb-4 inline-block"
+      >
         Ajouter un médecin
-      </a>
+      </button>
       <Card className="bg-white dark:bg-gray-800 shadow-sm">
         <CardContent className="p-6">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
