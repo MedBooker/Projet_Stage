@@ -307,7 +307,7 @@ export default function RegisterPage() {
                     disabled={formData.assurance === 'Aucune'}
                   >
                     <SelectTrigger className="h-11 bg-white/90 dark:bg-gray-800/90 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500">
-                      <SelectValue placeholder="Sélectionnez votre assurance" />
+                      <SelectValue placeholder="Sélectionnez votre prise en charge" />
                     </SelectTrigger>
                     <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm">
                       {assurances.map((assurance) => (
@@ -337,7 +337,7 @@ export default function RegisterPage() {
                   className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 dark:text-emerald-500 dark:border-gray-600"
                 />
                 <label htmlFor="noInsurance" className="text-sm text-gray-700 dark:text-gray-300">
-                  Je n'ai pas d'assurance maladie
+                  Je n'ai pas de prise en charge
                 </label>
               </div>
             </div>
