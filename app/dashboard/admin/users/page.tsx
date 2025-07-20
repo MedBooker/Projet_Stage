@@ -22,7 +22,7 @@ export default function UsersPage() {
     const fetchMedecins = async () => {
       try {
         const token = sessionStorage.getItem('auth_token');
-        const response = await fetch('${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/get-medecins', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/Admin/get-medecins`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
